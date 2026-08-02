@@ -1,0 +1,11 @@
+[project]
+name = "ai-core"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain-openai>=1.4.1",
+    "langchain-postgres>=0.0.17",
+    "pydantic-settings>=2.14.2",
+]
