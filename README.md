@@ -1,6 +1,6 @@
 # Chimera
 
-Like the mythical creature, **Chimera** is a Multi-Agent Research & Automation
+**Chimera** is a Multi-Agent Research & Automation
 Platform.
 
 > [!NOTE]
