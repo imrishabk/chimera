@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ai_core;
+package ai_core.v1;
 
 import "google/protobuf/timestamp.proto";
 
