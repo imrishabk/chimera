@@ -5,7 +5,6 @@ package ai_core.v1;
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/imrishabk/chimera/services/worker/internal/grpc;grpc";
-option py_generic_services = true;
 
 service AIService {}
 
