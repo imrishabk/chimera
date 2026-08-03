@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package ai_core;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/imrishabk/chimera/services/worker/internal/grpc;grpc";
+option py_generic_services = true;
+
+service AIService {}
+
+message Message {
+  string role = 1; // "user" | "AI" | "system"
+  string content = 2;
+}
+
+message ChatRequest {
+  string session_id = 1;
+  repeated Message messages = 2;
+  float temperature = 3; // Temperature of the model as request is sent
+  int32 max_tokens = 4;  // 0 = model default
+}
+
+message ChatResponse {
+  string session_id = 1;
+  Message message = 2; // Single token chunk when streaming
+}
+
+message IngestRequest {
+  string session_id = 1;
+  repeated Document documents = 2;
+}
+
+message Document {
+  string content = 1;
+  string source = 2;
+  string source_type = 3; // "url" | "pdf" | "text" | "markdown" | "api"
+  string doc_id = 4;
+  int32 chunk_index = 5;
+  string page_title = 6;
+  string chapter = 7;
+  map<string, string> metadata = 8;
+}
+
+message IngestResponse {
+  bool success = 1;
+  int32 count = 2;
+  repeated string docs_id = 3;
+  string error = 4;
+}
+
+message QueryRequest {
+  string session_id = 1;
+  string query = 2;
+  int32 k = 3;
+  map<string, string> filter = 4;
+}
+
+message QueryResponse {
+  string answer = 1;
+  repeated Source sources = 2;
+  string session_id = 3;
+}
+
+message Source {
+  string content = 1;
+  map<string, string> metadata = 2;
+  float score = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+  string version = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
