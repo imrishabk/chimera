@@ -45,7 +45,7 @@ async def ensure_docs_table() -> None:
 
 
 async def get_rag_store() -> PGVectorStore:
-    return PGVectorStore.create(
+    return await PGVectorStore.create(
         engine=get_engine(),
         table_name=RAG_TABLE,
         embedding_service=get_embeddings(),
