@@ -6,7 +6,13 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/imrishabk/chimera/services/worker/internal/grpc;grpc";
 
-service AIService {}
+service AIService {
+  rpc Chat(ChatRequest) returns (ChatResponse);
+  rpc ChatStream(ChatRequest) returns (stream ChatResponse);
+  rpc IngestDocuments(IngestRequest) returns (IngestResponse);
+  rpc QueryRAG(QueryRequest) returns (QueryResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
 
 message Message {
   string role = 1; // "user" | "AI" | "system"

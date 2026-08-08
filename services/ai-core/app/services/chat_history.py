@@ -19,12 +19,12 @@ async def get_connection() -> AsyncConnection:
     global _connection
     if _connection is None or _connection.closed:
         _connection = await AsyncConnection.connect(_connection_string())
-        return _connection
+    return _connection
 
 
 async def ensure_chat_history_table() -> None:
     conn = await get_connection()
-    return PostgresChatMessageHistory.acreate_tables(conn, CHAT_HISTORY_TABLE)
+    return await PostgresChatMessageHistory.acreate_tables(conn, CHAT_HISTORY_TABLE)
 
 
 async def get_chat_history(session_id: str) -> PostgresChatMessageHistory:
