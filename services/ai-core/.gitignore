@@ -6,5 +6,7 @@ dist/
 wheels/
 *.egg-info
 
+grpc_gen/generated
+
 # Virtual environments
 .venv
