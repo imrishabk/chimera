@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     db_database: str = "chimera"
     db_port: str = "5432"
 
+    chunk_size: int = 1000
+    chunk_overlap: int = 200
+
 
 @lru_cache
 def get_settings() -> Settings:
