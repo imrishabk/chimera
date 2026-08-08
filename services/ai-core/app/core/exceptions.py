@@ -1,3 +1,4 @@
+import inspect
 import typing
 from collections.abc import Callable
 from functools import wraps
@@ -28,8 +29,28 @@ class ExternalServiceError(AIServiceError):
 
 
 def handle_grpc_errors(method: Callable) -> Callable:
+    if inspect.isasyncgenfunction(method):
+
+        @wraps(method)
+        async def stream_wrapper(self, request, context: grpc.aio.ServicerContext):
+            try:
+                async for item in method(self, request, context):
+                    yield item
+            except AIServiceError as e:
+                context.set_code(e.grpc_code)
+                context.set_details(str(e))
+                logger.warning("Service error", method=method.__name__, error=str(e))
+            except Exception as e:
+                context.set_code(grpc.StatusCode.INTERNAL)
+                context.set_details("Internal server error")
+                logger.exception(
+                    "Unhandled error", method=method.__name__, error=str(e)
+                )
+
+        return stream_wrapper
+
     @wraps(method)
-    async def wrapper(self, request, context: grpc.aio.ServicerContext):
+    async def unary_wrapper(self, request, context: grpc.aio.ServicerContext):
         try:
             return await method(self, request, context)
         except AIServiceError as e:
@@ -43,7 +64,7 @@ def handle_grpc_errors(method: Callable) -> Callable:
             logger.exception("Unhandled error", method=method.__name__, error=str(e))
             return _empty_response(method)
 
-    return wrapper
+    return unary_wrapper
 
 
 def _empty_response(method: Callable) -> Any:

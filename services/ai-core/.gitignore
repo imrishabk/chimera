@@ -7,6 +7,6 @@ wheels/
 *.egg-info
 
 grpc_gen/generated
-
+.env
 # Virtual environments
 .venv

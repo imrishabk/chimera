@@ -1,15 +1,22 @@
+import asyncio
 import structlog
 from grpc import aio
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationError, handle_grpc_errors
 from app.schemas.rag import DocumentBase
-from app.services.chat_history import add_message, get_chat_history, get_messages
+from app.services.chat_history import (
+    add_message,
+    ensure_chat_history_table,
+    get_chat_history,
+    get_messages,
+)
 from app.services.chunker import chunk_documents
 from app.services.llm import get_llm
-from app.services.vector_store import get_rag_store
+from app.services.vector_store import ensure_docs_table, get_rag_store
 from grpc_gen import ai_core_pb2, ai_core_pb2_grpc
 
 logger = structlog.get_logger()
@@ -78,7 +85,7 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
         chunk_buffer = []
         tokens_per_chunk = self.settings.stream_tokens_per_chunk
 
-        async for chunk in self.llm.astream(history):
+        async for chunk in self.llm().astream(history):
             token = chunk.content
             if token:
                 accumulated += token
@@ -113,7 +120,10 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
         if not request.documents:
             raise ValidationError("documents list cannot be empty")
 
-        documents = [self._proto_to_document(d) for d in request.documents]
+        # documents = [self._proto_to_document(d) for d in request.documents]
+        documents = await asyncio.gather(
+            *(self._proto_to_document(doc) for doc in request.documents)
+        )
 
         chunks = self._chunker(documents)
 
@@ -167,7 +177,9 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
         contexts_parts = []
         for i, (doc, score) in enumerate(results):
             source = ai_core_pb2.Source(
-                content=doc.page_content, metadata=doc.metadata, score=float(score)
+                content=doc.page_content,
+                metadata={str(k): str(v) for k, v in (doc.metadata or {}).items()},
+                score=float(score),
             )
             sources.append(source)
             contexts_parts.append(f"[Source {i + 1} {doc.page_content}")
@@ -189,13 +201,15 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
         Answer:"""
 
         llm = self.llm
-        response = await llm.ainvoke(prompt)
+        response = await llm().ainvoke(prompt)
 
         return ai_core_pb2.QueryResponse(
             answer=response.content, sources=sources, session_id=session_id
         )
 
-    async def Health(self, request, context):
+    async def Health(
+        self, _request: ai_core_pb2.HealthRequest, _context: aio.ServicerContext
+    ):
         from google.protobuf.timestamp_pb2 import Timestamp
 
         from app.services.vector_store import get_engine
@@ -210,10 +224,11 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
             status = "unhealthy"
 
         timestamp = Timestamp()
-        Timestamp.GetCurrentTime()
 
         return ai_core_pb2.HealthResponse(
-            status=status, version=self.settings.version, timestamp=timestamp
+            status=status,
+            version=self.settings.version,
+            timestamp=timestamp.GetCurrentTime(),
         )
 
     async def _proto_to_document(self, proto_doc: ai_core_pb2.Document) -> DocumentBase:
@@ -238,18 +253,24 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
 
 
 async def serve_grpc(port: int = 50051) -> aio.Server:
+    for ensure_fn in (ensure_chat_history_table, ensure_docs_table):
+        try:
+            await ensure_fn()
+        except ProgrammingError as e:
+            if "already exists" not in str(e):
+                raise
+            logger.info("Table already exists, skipping", fn=ensure_fn.__name__)
+
     server = aio.server()
     ai_core_pb2_grpc.add_AIServiceServicer_to_server(AIServiceServicer(), server)
     server.add_insecure_port(f"[::]:{port}")
     await server.start()
     logger.info("gRPC server started", port=port)
-
     try:
         await server.wait_for_termination()
     finally:
         print("Shutting down gRPC server...")
         await server.stop(grace=5)
-
     return server
 
 
