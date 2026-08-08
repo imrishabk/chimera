@@ -1,4 +1,4 @@
-from langchain_text_splitters import RecursiveCharacterText
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.core.config import get_settings
 from app.schemas.rag import DocumentBase, DocumentChunk
@@ -6,7 +6,7 @@ from app.schemas.rag import DocumentBase, DocumentChunk
 
 def chunk_documents(documents: list[DocumentBase]) -> list[DocumentChunk]:
     settings = get_settings()
-    splitter = RecursiveCharacterText(
+    splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
         separators=["\n\n", "\n", ". ", " ", ""],

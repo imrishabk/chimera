@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     chunk_size: int = 1000
     chunk_overlap: int = 200
+    stream_tokens_per_chunk: int = 15
+    version: str = "0.1.0"
 
 
 @lru_cache

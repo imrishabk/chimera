@@ -23,6 +23,7 @@ message ChatRequest {
 message ChatResponse {
   string session_id = 1;
   Message message = 2; // Single token chunk when streaming
+  bool done = 3;
 }
 
 message IngestRequest {
