@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = 200
     stream_tokens_per_chunk: int = 15
     version: str = "0.1.0"
+    grpc_port: int = 50051
 
 
 @lru_cache
