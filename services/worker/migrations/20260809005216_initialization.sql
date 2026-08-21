@@ -18,12 +18,13 @@ CREATE TABLE sessions (
   CONSTRAINT fk_sessions_user_id
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-)
+);
 
 -- CREATE index from user_id in sessions table.
 CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 
 -- Create set_updated_at function to update the column
+-- +goose StatementBegin
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -31,6 +32,7 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
 -- Trigger to update updated_at for users
 CREATE TRIGGER trg_users_updated_at
