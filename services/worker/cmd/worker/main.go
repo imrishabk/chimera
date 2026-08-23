@@ -6,12 +6,17 @@ import (
 	"charm.land/log/v2"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/imrishabk/chimera/services/worker/internal/routes"
 )
 
 func main() {
 	r := chi.NewRouter()
 
+	// Default Public Intro Route
 	r.HandleFunc("/", defaultRoute)
+
+	// API Route
+	r.Mount("/api", routes.Configure())
 
 	log.Info("Starting server", "port", 8000)
 	if err := http.ListenAndServe(":8000", r); err != nil {
