@@ -14,3 +14,13 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
+
+type UserSession struct {
+	ID        int64     `json:"id" db:"id"`
+	Token     string    `json:"token,omitempty" db:"token"`
+	UserID    uuid.UUID `json:"user_id" db:"user_id"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+	Expired   bool      `json:"expired" db:"expired"`
+}

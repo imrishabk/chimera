@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func ConstructDSN() string {
@@ -17,17 +19,32 @@ func ConstructDSN() string {
 		os.Getenv("DB_DATABASE"))
 }
 
-func CreateUserSession() (*string, error) {
+func CreateUserSession() (string, error) {
 	tokenBytes, err := strconv.Atoi(os.Getenv("USER_SESSION_TOKEN_BYTE"))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	b := make([]byte, tokenBytes)
 	if _, err := rand.Read(b); err != nil {
-		return nil, fmt.Errorf("Failed to generate session id: %w", err)
+		return "", fmt.Errorf("Failed to generate session id: %w", err)
 	}
 
 	s := base64.RawURLEncoding.EncodeToString(b)
-	return &s, nil
+	return s, nil
+}
+
+func HashPassword(p string) (string, error) {
+	b, err := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(b), err
+}
+
+func VerifyPassword(password, hash string) bool {
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return true
+	}
+	return false
 }
