@@ -80,7 +80,7 @@ func (db *sessionRepository) FetchSessionCountByUserID(ctx context.Context, user
 func (db *sessionRepository) ListSessionByUserID(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.Session, error) {
 	query := `
 	SELECT id, created_at FROM sessions WHERE user_id = $1
-	LIMIT = $2 OFFSET = $3
+	LIMIT $2 OFFSET $3
 	`
 
 	rows, err := db.pool.Query(ctx, query, userID, limit, offset)

@@ -20,6 +20,10 @@ type userSessionRepository struct {
 	pool *pgxpool.Pool
 }
 
+func NewUserSessionRepository(p *pgxpool.Pool) *userSessionRepository {
+	return &userSessionRepository{pool: p}
+}
+
 func (db *userSessionRepository) FetchToken(ctx context.Context, token string) (*model.UserSession, error) {
 	query := `
 	SELECT id, token, user_id, created_at, updated_at, expires_at, expired

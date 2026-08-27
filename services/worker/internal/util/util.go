@@ -20,7 +20,7 @@ func ConstructDSN() string {
 }
 
 func CreateUserSession() (string, error) {
-	tokenBytes, err := strconv.Atoi(os.Getenv("USER_SESSION_TOKEN_BYTE"))
+	tokenBytes, err := strconv.Atoi(os.Getenv("USER_SESSION_TOKEN_BYTES"))
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +44,7 @@ func HashPassword(p string) (string, error) {
 
 func VerifyPassword(password, hash string) bool {
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
-		return true
+		return false
 	}
-	return false
+	return true
 }
