@@ -4,72 +4,82 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/imrishabk/chimera/services/worker/internal/handler"
+	"github.com/imrishabk/chimera/services/worker/internal/middleware"
+	"github.com/imrishabk/chimera/services/worker/internal/service"
 )
 
-func Configure() chi.Router {
+func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 	r := chi.NewRouter()
 
-	// Auth Routes
+	// Auth Routes (public)
 	r.Route("/auth", func(r chi.Router) {
-		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Register Route"))
-		})
-		r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Login Route"))
-		})
+		r.Post("/register", handlers.Auth.Register)
+		r.Post("/login", handlers.Auth.Login)
 		r.Group(func(r chi.Router) {
+			r.Use(middleware.AuthMiddleware)
 			r.Put("/{userId}", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("Update User"))
-			})
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Update User"}`))
+		})
 			r.Post("/refresh", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("Refresh Token"))
-			})
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Refresh Token"}`))
+		})
 			r.Delete("/{userId}", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("Delete user"))
-			})
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Delete user"}`))
+		})
 		})
 	})
 
-	// Session Routes
+	// Session Routes (protected)
 	r.Route("/session", func(r chi.Router) {
-		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Create Session"))
-		})
+		r.Use(middleware.AuthMiddleware)
+		r.Post("/", handlers.Session.Create)
 		r.Get("/list/{userId}", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("List Sessions"))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"List Sessions"}`))
 		})
 		r.Get("/{sessionId}", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Get session info"))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Get session info"}`))
 		})
 	})
 
-	// Chat Routes
+	// Chat Routes (protected)
 	r.Route("/chat", func(r chi.Router) {
-		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Send a chat"))
-		})
+		r.Use(middleware.AuthMiddleware)
+		r.Post("/", handlers.Chat.Send)
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Get Chats"))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Get Chats"}`))
 		})
 	})
 
-	// Ingestion Route
+	// Ingestion Route (protected)
 	r.Group(func(r chi.Router) {
+		r.Use(middleware.AuthMiddleware)
 		r.Post("/ingestion", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Ingestion push"))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Ingestion push"}`))
 		})
 	})
 
-	// Query Route
+	// Query Route (protected)
 	r.Group(func(r chi.Router) {
+		r.Use(middleware.AuthMiddleware)
 		r.Post("/query", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Query submission"))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"success":true,"data":"Query submission"}`))
 		})
 	})
 
-	// Health Route
+	// Health Route (public)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Healthy"))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"success":true,"status":"healthy"}`))
 	})
 
 	return r

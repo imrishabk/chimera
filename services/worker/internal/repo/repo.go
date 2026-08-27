@@ -5,13 +5,15 @@ import (
 )
 
 type Repositories struct {
-	User    UserRepository
-	Session SessionRepository
+	User        UserRepository
+	Session     SessionRepository
+	UserSession UserSessionRepository
 }
 
 func New(p *pgxpool.Pool) *Repositories {
 	return &Repositories{
-		User:    NewUserRepository(p),
-		Session: NewSessionRepository(p),
+		User:        NewUserRepository(p),
+		Session:     NewSessionRepository(p),
+		UserSession: NewUserSessionRepository(p),
 	}
 }

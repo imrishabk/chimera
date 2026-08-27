@@ -25,8 +25,8 @@ type authService struct {
 	userSession repo.UserSessionRepository
 }
 
-func NewAuthService(userRepo repo.UserRepository) AuthService {
-	return &authService{user: userRepo}
+func NewAuthService(userRepo repo.UserRepository, sessionRepo repo.UserSessionRepository) AuthService {
+	return &authService{user: userRepo, userSession: sessionRepo}
 }
 
 func (s *authService) LoginUser(c context.Context, r *model.LoginRequest) (string, error) {
