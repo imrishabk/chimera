@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	aicorepb "github.com/imrishabk/chimera/services/worker/internal/grpc"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
-	"golang.org/x/net/context"
 )
 
 type mockChatService struct {
@@ -26,24 +26,28 @@ func (m *mockChatService) CreateSession(ctx context.Context, userID uuid.UUID) (
 	}
 	return &model.Session{ID: uuid.New(), UserID: userID}, nil
 }
+
 func (m *mockChatService) GetSession(ctx context.Context, id uuid.UUID) (*model.Session, error) {
 	if m.getSession != nil {
 		return m.getSession(ctx, id)
 	}
 	return &model.Session{ID: id}, nil
 }
+
 func (m *mockChatService) ListSessions(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.Session, error) {
 	if m.listSessions != nil {
 		return m.listSessions(ctx, userID, limit, offset)
 	}
 	return []model.Session{}, nil
 }
+
 func (m *mockChatService) CreateChat(ctx context.Context, req *model.ChatRequest) (*aicorepb.ChatResponse, error) {
 	if m.createChat != nil {
 		return m.createChat(ctx, req)
 	}
 	return &aicorepb.ChatResponse{SessionId: req.SessionID.String()}, nil
 }
+
 func (m *mockChatService) ListChats(ctx context.Context, sid uuid.UUID) ([]*aicorepb.Message, error) {
 	if m.listChats != nil {
 		return m.listChats(ctx, sid)
