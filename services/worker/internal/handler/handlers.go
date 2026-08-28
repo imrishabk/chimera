@@ -21,7 +21,11 @@ func NewHandlers(svc *service.Services) *Handlers {
 		Chat:    NewChatHandler(svc.Chat),
 	}
 	if svc.RAG != nil {
-		h.Ingest = NewIngestHandler(svc.RAG)
+		if svc.IngestJob != nil {
+			h.Ingest = NewIngestJobHandler(svc.IngestJob, svc.RAG)
+		} else {
+			h.Ingest = NewIngestHandler(svc.RAG)
+		}
 		h.Query = NewQueryHandler(svc.RAG)
 	}
 	return h

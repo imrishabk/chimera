@@ -40,13 +40,15 @@ func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 		r.Get("/", handlers.Chat.List)
 	})
 
-	// Ingestion Route (protected)
-	r.Group(func(r chi.Router) {
+	// Ingestion Routes (protected) — job tracking via PLAN.md
+	r.Route("/ingestion", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		if handlers.Ingest != nil {
-			r.Post("/ingestion", handlers.Ingest.Push)
+			r.Post("/", handlers.Ingest.Push)
+			r.Get("/{jobId}", handlers.Ingest.Get)
+			r.Get("/list/{sessionId}", handlers.Ingest.List)
 		} else {
-			r.Post("/ingestion", func(w http.ResponseWriter, r *http.Request) {
+			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusServiceUnavailable)
 				w.Write([]byte(`{"success":false,"error":"ingestion service unavailable — AI Core not connected"}`))
 			})

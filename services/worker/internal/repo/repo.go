@@ -8,6 +8,7 @@ type Repositories struct {
 	User        UserRepository
 	Session     SessionRepository
 	UserSession UserSessionRepository
+	IngestJob   IngestJobRepository
 }
 
 func New(p *pgxpool.Pool) *Repositories {
@@ -15,5 +16,6 @@ func New(p *pgxpool.Pool) *Repositories {
 		User:        NewUserRepository(p),
 		Session:     NewSessionRepository(p),
 		UserSession: NewUserSessionRepository(p),
+		IngestJob:   NewIngestJobRepository(p),
 	}
 }
