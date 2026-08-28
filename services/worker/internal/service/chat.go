@@ -14,7 +14,10 @@ import (
 
 type ChatService interface {
 	CreateSession(c context.Context, userID uuid.UUID) (*model.Session, error)
+	GetSession(c context.Context, sessionID uuid.UUID) (*model.Session, error)
+	ListSessions(c context.Context, userID uuid.UUID, limit, offset int) ([]model.Session, error)
 	CreateChat(c context.Context, r *model.ChatRequest) (*aicorepb.ChatResponse, error)
+	ListChats(c context.Context, sessionID uuid.UUID) ([]*aicorepb.Message, error)
 }
 
 type chatService struct {
@@ -48,6 +51,22 @@ func (s *chatService) CreateSession(c context.Context, userID uuid.UUID) (*model
 		return nil, err
 	}
 	return ses, nil
+}
+
+func (s *chatService) GetSession(c context.Context, sessionID uuid.UUID) (*model.Session, error) {
+	return s.session.FetchSession(c, sessionID)
+}
+
+func (s *chatService) ListSessions(c context.Context, userID uuid.UUID, limit, offset int) ([]model.Session, error) {
+	return s.session.ListSessionByUserID(c, userID, limit, offset)
+}
+
+func (s *chatService) ListChats(c context.Context, sessionID uuid.UUID) ([]*aicorepb.Message, error) {
+	// Chat history is stored in Python AI Core via PostgresChatMessageHistory.
+	// For now return empty; when QueryRAG/Chat history fetch is needed, add gRPC method.
+	_ = c
+	_ = sessionID
+	return []*aicorepb.Message{}, nil
 }
 
 func (s *chatService) CreateChat(c context.Context, r *model.ChatRequest) (*aicorepb.ChatResponse, error) {

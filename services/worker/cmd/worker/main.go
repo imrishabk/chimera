@@ -21,9 +21,6 @@ import (
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 )
 
-// Note: repositories variable declared but routes.Configure() does not yet
-// receive repositories. Next step: wire repos into routes/service layer.
-
 func main() {
 	_ = godotenv.Load()
 
@@ -54,14 +51,17 @@ func main() {
 
 	repositories := repo.New(pool)
 
-	services := service.NewServices(repositories)
-
 	grpcClient, grpcErr := grpcclient.NewClient(os.Getenv("GRPC_AI_HOST"))
 	if grpcErr != nil {
 		grpcClient = nil
 		log.Info("AI Core gRPC not available", "error", grpcErr)
 	} else {
 		defer grpcClient.Close()
+	}
+
+	services := service.NewServices(repositories)
+	if grpcClient != nil {
+		services.RAG = service.NewRAGService(grpcClient)
 	}
 
 	handlers := handler.NewHandlers(services)
