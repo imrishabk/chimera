@@ -52,11 +52,12 @@ func (db *userSessionRepository) RegisterToken(ctx context.Context, token string
 	RETURNING id, token, user_id, created_at, updated_at, expires_at, expired;
 	`
 	var ses model.UserSession
-	if err := db.pool.QueryRow(ctx, query, token, userID, expiresAt, expiresAt).Scan(
+	if err := db.pool.QueryRow(ctx, query, token, userID, expiresAt, expired).Scan(
 		&ses.ID,
 		&ses.Token,
 		&ses.UserID,
 		&ses.CreatedAt,
+		&ses.UpdatedAt,
 		&ses.ExpiresAt,
 		&ses.Expired,
 	); err != nil {
@@ -68,7 +69,7 @@ func (db *userSessionRepository) RegisterToken(ctx context.Context, token string
 
 func (db *userSessionRepository) SetSessionExpiredByToken(ctx context.Context, token string) (*model.UserSession, error) {
 	query := `
-	UPDATE user_sessions SET expired = true, expired_at = now()
+	UPDATE user_sessions SET expired = true, expires_at = now()
 	WHERE token = $1
 	RETURNING id, token, user_id, created_at, updated_at, expires_at, expired
 	`
@@ -78,6 +79,7 @@ func (db *userSessionRepository) SetSessionExpiredByToken(ctx context.Context, t
 		&ses.Token,
 		&ses.UserID,
 		&ses.CreatedAt,
+		&ses.UpdatedAt,
 		&ses.ExpiresAt,
 		&ses.Expired,
 	); err != nil {
@@ -89,7 +91,7 @@ func (db *userSessionRepository) SetSessionExpiredByToken(ctx context.Context, t
 
 func (db *userSessionRepository) SetSessionExpiredByUserID(ctx context.Context, userID uuid.UUID) (*model.UserSession, error) {
 	query := `
-	UPDATE user_sessions SET expired = true, expired_at = now()
+	UPDATE user_sessions SET expired = true, expires_at = now()
 	WHERE user_id = $1
 	RETURNING id, token, user_id, created_at, updated_at, expires_at, expired
 	`
@@ -99,6 +101,7 @@ func (db *userSessionRepository) SetSessionExpiredByUserID(ctx context.Context, 
 		&ses.Token,
 		&ses.UserID,
 		&ses.CreatedAt,
+		&ses.UpdatedAt,
 		&ses.ExpiresAt,
 		&ses.Expired,
 	); err != nil {

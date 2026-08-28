@@ -63,15 +63,19 @@ func (db *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, username
 		queryArgs = append(queryArgs, email)
 	}
 	if passwordHash != "" {
-		updates = append(updates, fmt.Sprintf("passwordHash = $%d", counter))
+		updates = append(updates, fmt.Sprintf("password_hash = $%d", counter))
 		counter += 1
 		queryArgs = append(queryArgs, passwordHash)
 	}
 
+	if len(updates) == 0 {
+		return nil, fmt.Errorf("no fields to update")
+	}
 	var u model.User
 	query := "UPDATE users SET "
 	query += strings.Join(updates, ", ")
-	query += fmt.Sprintf("WHERE id = $%d RETURNING id, username, email, password_hash, created_at, updated_at", counter)
+	query += fmt.Sprintf(" WHERE id = $%d RETURNING id, username, email, password_hash, created_at, updated_at", counter)
+	queryArgs = append(queryArgs, id)
 	row := db.pool.QueryRow(ctx, query, queryArgs...)
 	if err := row.Scan(
 		&u.ID,

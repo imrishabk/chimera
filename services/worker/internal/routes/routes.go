@@ -19,18 +19,9 @@ func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 		r.Post("/login", handlers.Auth.Login)
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware)
-			r.Put("/{userId}", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Update User"}`))
-		})
-			r.Post("/refresh", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Refresh Token"}`))
-		})
-			r.Delete("/{userId}", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Delete user"}`))
-		})
+			r.Put("/{userId}", handlers.Auth.UpdateUser)
+			r.Post("/refresh", handlers.Auth.Refresh)
+			r.Delete("/{userId}", handlers.Auth.DeleteUser)
 		})
 	})
 
@@ -38,42 +29,41 @@ func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 	r.Route("/session", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		r.Post("/", handlers.Session.Create)
-		r.Get("/list/{userId}", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"List Sessions"}`))
-		})
-		r.Get("/{sessionId}", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Get session info"}`))
-		})
+		r.Get("/list/{userId}", handlers.Session.List)
+		r.Get("/{sessionId}", handlers.Session.Get)
 	})
 
 	// Chat Routes (protected)
 	r.Route("/chat", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		r.Post("/", handlers.Chat.Send)
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Get Chats"}`))
-		})
+		r.Get("/", handlers.Chat.List)
 	})
 
 	// Ingestion Route (protected)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
-		r.Post("/ingestion", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Ingestion push"}`))
-		})
+		if handlers.Ingest != nil {
+			r.Post("/ingestion", handlers.Ingest.Push)
+		} else {
+			r.Post("/ingestion", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte(`{"success":false,"error":"ingestion service unavailable — AI Core not connected"}`))
+			})
+		}
 	})
 
 	// Query Route (protected)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
-		r.Post("/query", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"success":true,"data":"Query submission"}`))
-		})
+		if handlers.Query != nil {
+			r.Post("/query", handlers.Query.Submit)
+		} else {
+			r.Post("/query", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte(`{"success":false,"error":"query service unavailable — AI Core not connected"}`))
+			})
+		}
 	})
 
 	// Health Route (public)

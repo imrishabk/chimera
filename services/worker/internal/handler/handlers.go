@@ -10,12 +10,19 @@ type Handlers struct {
 	Auth    *AuthHandler
 	Session *SessionHandler
 	Chat    *ChatHandler
+	Ingest  *IngestHandler
+	Query   *QueryHandler
 }
 
 func NewHandlers(svc *service.Services) *Handlers {
-	return &Handlers{
+	h := &Handlers{
 		Auth:    NewAuthHandler(svc.Auth),
 		Session: NewSessionHandler(svc.Chat),
 		Chat:    NewChatHandler(svc.Chat),
 	}
+	if svc.RAG != nil {
+		h.Ingest = NewIngestHandler(svc.RAG)
+		h.Query = NewQueryHandler(svc.RAG)
+	}
+	return h
 }
