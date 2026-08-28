@@ -37,6 +37,7 @@ func main() {
 		dbPort = "5432"
 	}
 
+	log.Info("Creating database pool on", "host", dbHost, "port", dbPort, "database", dbName)
 	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
 		dbUser, dbPass, dbHost, dbPort, dbName)
 
@@ -48,17 +49,19 @@ func main() {
 		log.Fatal("Failed to connect to database", "error", err)
 	}
 	defer pool.Close()
-
+	log.Info("Successfully created database pool")
 	repositories := repo.New(pool)
 
-	grpcClient, grpcErr := grpcclient.NewClient(os.Getenv("GRPC_AI_HOST"))
+	grpcHost := os.Getenv("GRPC_AI_HOST")
+	log.Info("Creating GRPC client on", "host", grpcHost)
+	grpcClient, grpcErr := grpcclient.NewClient(grpcHost)
 	if grpcErr != nil {
 		grpcClient = nil
 		log.Info("AI Core gRPC not available", "error", grpcErr)
 	} else {
 		defer grpcClient.Close()
 	}
-
+	log.Info("Successfully created GRPC client")
 	services := service.NewServices(repositories)
 	if grpcClient != nil {
 		services.RAG = service.NewRAGService(grpcClient)
@@ -77,6 +80,21 @@ func main() {
 
 	r.HandleFunc("/", defaultRoute)
 	r.Mount("/api", routes.Configure(services, handlers))
+
+	log.Info("Registering Routes")
+	err = chi.Walk(r, func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		log.Info("\t",
+			"method", method,
+			"route", route,
+			"middlewares", len(middlewares),
+		)
+		return nil
+	})
+	if err != nil {
+		log.Error("failed to walk through logs", "error", err)
+	} else {
+		log.Info("Successfully registered all routes")
+	}
 
 	log.Info("Starting server", "port", 8000, "db_connected", true)
 	if err := http.ListenAndServe(":8000", r); err != nil {
