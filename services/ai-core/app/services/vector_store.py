@@ -2,7 +2,7 @@ from functools import lru_cache
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import Column, PGEngine, PGVectorStore
-
+from sqlalchemy import text
 from app.core.config import get_settings
 
 RAG_TABLE = "rag_vec"
@@ -30,18 +30,24 @@ def get_engine() -> PGEngine:
 
 async def ensure_docs_table() -> None:
     engine = get_engine()
-    await engine.ainit_vectorstore_table(
-        table_name=RAG_TABLE,
-        vector_size=VECTOR_SIZE,
-        metadata_columns=[
-            Column("session_id", "VARCHAR"),
-            Column("source", "VARCHAR"),
-            Column("source_type", "VARCHAR"),
-            Column("doc_id", "VARCHAR"),
-            Column("chunk_index", "INTEGER"),
-        ],
-        overwrite_existing=False,
-    )
+    async with engine._pool.connect() as conn:
+        result = await conn.execute(
+            text("SELECT to_regclass('public.' || :table)"), {"table": RAG_TABLE}
+        )
+        exists = result.scalar() is not None
+    if not exists:
+        await engine.ainit_vectorstore_table(
+            table_name=RAG_TABLE,
+            vector_size=VECTOR_SIZE,
+            metadata_columns=[
+                Column("session_id", "VARCHAR"),
+                Column("source", "VARCHAR"),
+                Column("source_type", "VARCHAR"),
+                Column("doc_id", "VARCHAR"),
+                Column("chunk_index", "INTEGER"),
+            ],
+            overwrite_existing=False,
+        )
 
 
 async def get_rag_store() -> PGVectorStore:

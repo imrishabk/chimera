@@ -28,6 +28,8 @@ async def main():
         except Exception as e:  # noqa
             logger.error("Failed to initialize tables/database", error=e)
             sys.exit(1)
+        else:
+            logger.info("Synced the table", function=ensure_coro.__name__)
 
     server = await serve_grpc(port=settings.grpc_port)
 
