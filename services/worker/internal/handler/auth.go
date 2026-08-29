@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -138,6 +139,15 @@ func (h *AuthHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"success":false,"error":"invalid userId"}`))
 		return
 	}
+	// Ownership check: if token is present, ensure it belongs to target user
+	if token := extractToken(r); token != "" {
+		if ses, err := h.svc.ValidateToken(r.Context(), token); err == nil && ses.UserID != uid {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(`{"success":false,"error":"cannot revoke sessions for another user"}`))
+			return
+		}
+	}
 	if err := h.svc.LogoutFromAllDevice(r.Context(), uid); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
@@ -145,6 +155,60 @@ func (h *AuthHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"success":true,"data":"user sessions revoked"}`))
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	token := extractToken(r)
+	if token == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"success":false,"error":"Authorization token required"}`))
+		return
+	}
+	if err := h.svc.Logout(r.Context(), token); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"success":true,"data":"logged out"}`))
+}
+
+func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
+	token := extractToken(r)
+	if token == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"success":false,"error":"Authorization token required"}`))
+		return
+	}
+	if err := h.svc.LogoutFromAllDeviceByToken(r.Context(), token); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"success":true,"data":"all sessions revoked"}`))
+}
+
+func extractToken(r *http.Request) string {
+	token := r.Header.Get("X-User-Token")
+	if token == "" {
+		token = r.Header.Get("Authorization")
+	}
+	if token == "" {
+		token = r.Header.Get("X-Session-Token")
+	}
+	if token == "" {
+		return ""
+	}
+	parts := strings.SplitN(token, " ", 2)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return strings.TrimSpace(parts[1])
+	}
+	return strings.TrimSpace(token)
 }
 
 func parseUUID(s string, r *http.Request) (uuid.UUID, error) {

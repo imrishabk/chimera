@@ -17,6 +17,7 @@ type mockChatService struct {
 	getSession    func(ctx context.Context, id uuid.UUID) (*model.Session, error)
 	listSessions  func(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.Session, error)
 	createChat    func(ctx context.Context, req *model.ChatRequest) (*aicorepb.ChatResponse, error)
+	chatStream    func(ctx context.Context, req *model.ChatRequest) (aicorepb.AIService_ChatStreamClient, error)
 	listChats     func(ctx context.Context, sid uuid.UUID) ([]*aicorepb.Message, error)
 }
 
@@ -46,6 +47,13 @@ func (m *mockChatService) CreateChat(ctx context.Context, req *model.ChatRequest
 		return m.createChat(ctx, req)
 	}
 	return &aicorepb.ChatResponse{SessionId: req.SessionID.String()}, nil
+}
+
+func (m *mockChatService) ChatStream(ctx context.Context, req *model.ChatRequest) (aicorepb.AIService_ChatStreamClient, error) {
+	if m.chatStream != nil {
+		return m.chatStream(ctx, req)
+	}
+	return nil, nil
 }
 
 func (m *mockChatService) ListChats(ctx context.Context, sid uuid.UUID) ([]*aicorepb.Message, error) {

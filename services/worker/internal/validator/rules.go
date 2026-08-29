@@ -28,7 +28,7 @@ func registerCustomValidation(v *validator.Validate) {
 				hasLower = true
 			case unicode.IsDigit(r):
 				hasDigit = true
-			case unicode.IsSpace(r):
+			case unicode.IsSymbol(r), unicode.IsPunct(r):
 				hasSpecial = true
 			}
 		}

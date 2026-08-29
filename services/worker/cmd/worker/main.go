@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"charm.land/log/v2"
@@ -73,6 +74,10 @@ func main() {
 	r.Use(middleware.ErrorHandler)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.Contains(r.URL.Path, "/stream") {
+				next.ServeHTTP(w, r)
+				return
+			}
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			next.ServeHTTP(w, r)
 		})

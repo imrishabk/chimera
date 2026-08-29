@@ -18,6 +18,8 @@ type AuthService interface {
 	RefreshUserSession(c context.Context, token string, expiresAt time.Time) (string, error)
 	Logout(c context.Context, token string) error
 	LogoutFromAllDevice(c context.Context, userID uuid.UUID) error
+	LogoutFromAllDeviceByToken(c context.Context, token string) error
+	ValidateToken(c context.Context, token string) (*model.UserSession, error)
 }
 
 type authService struct {
@@ -99,11 +101,47 @@ func (s *authService) RefreshUserSession(c context.Context, token string, expire
 }
 
 func (s *authService) Logout(c context.Context, token string) error {
+	if token == "" {
+		return fmt.Errorf("token required")
+	}
 	_, err := s.userSession.SetSessionExpiredByToken(c, token)
 	return err
 }
 
 func (s *authService) LogoutFromAllDevice(c context.Context, userID uuid.UUID) error {
+	if userID == uuid.Nil {
+		return fmt.Errorf("userID required")
+	}
 	_, err := s.userSession.SetSessionExpiredByUserID(c, userID)
 	return err
+}
+
+func (s *authService) LogoutFromAllDeviceByToken(c context.Context, token string) error {
+	if token == "" {
+		return fmt.Errorf("token required")
+	}
+	ses, err := s.userSession.FetchToken(c, token)
+	if err != nil {
+		return fmt.Errorf("invalid token: %w", err)
+	}
+	// Allow logout even if already expired - still deactivate all for idempotency
+	_, err = s.userSession.SetSessionExpiredByUserID(c, ses.UserID)
+	return err
+}
+
+func (s *authService) ValidateToken(c context.Context, token string) (*model.UserSession, error) {
+	if token == "" {
+		return nil, fmt.Errorf("token required")
+	}
+	ses, err := s.userSession.FetchToken(c, token)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token: %w", err)
+	}
+	if ses.Expired {
+		return nil, fmt.Errorf("token expired")
+	}
+	if time.Now().After(ses.ExpiresAt) {
+		return nil, fmt.Errorf("token expired")
+	}
+	return ses, nil
 }

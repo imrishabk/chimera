@@ -90,23 +90,10 @@ func (db *userSessionRepository) SetSessionExpiredByToken(ctx context.Context, t
 }
 
 func (db *userSessionRepository) SetSessionExpiredByUserID(ctx context.Context, userID uuid.UUID) (*model.UserSession, error) {
-	query := `
-	UPDATE user_sessions SET expired = true, expires_at = now()
-	WHERE user_id = $1
-	RETURNING id, token, user_id, created_at, updated_at, expires_at, expired
-	`
-	var ses model.UserSession
-	if err := db.pool.QueryRow(ctx, query, userID).Scan(
-		&ses.ID,
-		&ses.Token,
-		&ses.UserID,
-		&ses.CreatedAt,
-		&ses.UpdatedAt,
-		&ses.ExpiresAt,
-		&ses.Expired,
-	); err != nil {
+	// Deactivate ALL tokens for user — use Exec to handle multiple rows and idempotent 0-row case
+	query := `UPDATE user_sessions SET expired = true, expires_at = now() WHERE user_id = $1`
+	if _, err := db.pool.Exec(ctx, query, userID); err != nil {
 		return nil, err
-	} else {
-		return &ses, nil
 	}
+	return &model.UserSession{UserID: userID, Expired: true}, nil
 }

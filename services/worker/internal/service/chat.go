@@ -17,6 +17,7 @@ type ChatService interface {
 	GetSession(c context.Context, sessionID uuid.UUID) (*model.Session, error)
 	ListSessions(c context.Context, userID uuid.UUID, limit, offset int) ([]model.Session, error)
 	CreateChat(c context.Context, r *model.ChatRequest) (*aicorepb.ChatResponse, error)
+	ChatStream(c context.Context, r *model.ChatRequest) (aicorepb.AIService_ChatStreamClient, error)
 	ListChats(c context.Context, sessionID uuid.UUID) ([]*aicorepb.Message, error)
 }
 
@@ -99,4 +100,24 @@ func (s *chatService) CreateChat(c context.Context, r *model.ChatRequest) (*aico
 	}
 
 	return resp, nil
+}
+
+func (s *chatService) ChatStream(c context.Context, r *model.ChatRequest) (aicorepb.AIService_ChatStreamClient, error) {
+	if r == nil || r.SessionID == uuid.Nil {
+		return nil, fmt.Errorf("chat request or session_id is required")
+	}
+	if s.grpcClient == nil {
+		return nil, fmt.Errorf("AI Core unavailable — gRPC client not connected")
+	}
+	protoMessages := []*aicorepb.Message{
+		{
+			Role:    "user",
+			Content: r.Text,
+		},
+	}
+	stream, err := s.grpcClient.ChatStream(c, r.SessionID.String(), protoMessages, 0.7, 0)
+	if err != nil {
+		return nil, fmt.Errorf("AI Core ChatStream call failed: %w", err)
+	}
+	return stream, nil
 }
