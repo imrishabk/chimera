@@ -18,7 +18,7 @@ real time in `typescript`.
 ### Stack
 
 - **Language**: Python, Go, Typescript
-- **Core Framework/Library**: FastAPI, Langchain, OpenAI SDK, GoFiber, Astro
+- **Core Framework/Library**: FastAPI, Langchain, OpenAI SDK, Chi, Astro
 - **Database**: PostgreSQL with PGVector
 - **API**: RESTful API, gRPC
 - **DevOps**: GitHub Actions, Docker
