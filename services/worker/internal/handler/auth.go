@@ -92,6 +92,11 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
 		return
 	}
+	if req.OldPassword == req.NewPassword {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"success":false,"error":"old password cannot be same as new password"}`))
+		return
+	}
 	uid, err := parseUUID(userID, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -102,6 +107,7 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": u})
