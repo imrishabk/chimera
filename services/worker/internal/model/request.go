@@ -12,7 +12,7 @@ type UpdateUserRequest struct {
 	Username    string `json:"username" validate:"omitempty,username"`
 	Email       string `json:"email" validate:"omitempty,email"`
 	OldPassword string `json:"old_password" validate:"omitempty"`
-	NewPassword string `json:"new_password" validate:"required,password"`
+	NewPassword string `json:"new_password" validate:"omitempty,password"`
 }
 
 type LoginRequest struct {
