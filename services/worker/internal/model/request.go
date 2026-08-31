@@ -8,6 +8,13 @@ type RegisterRequest struct {
 	Password string `json:"password" validate:"required,password"`
 }
 
+type UpdateUserRequest struct {
+	Username    string `json:"username" validate:"omitempty,username"`
+	Email       string `json:"email" validate:"omitempty,email"`
+	OldPassword string `json:"old_password" validate:"omitempty"`
+	NewPassword string `json:"new_password" validate:"required,password"`
+}
+
 type LoginRequest struct {
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`

@@ -15,6 +15,7 @@ type AuthService interface {
 	LoginUser(c context.Context, r *model.LoginRequest) (string, error)
 	RegisterUser(c context.Context, r *model.RegisterRequest) (*model.User, error)
 	GetUser(c context.Context, userID uuid.UUID) (*model.User, error)
+	UpdateUser(c context.Context, userID uuid.UUID, r *model.UpdateUserRequest) (*model.User, error)
 	RefreshUserSession(c context.Context, token string, expiresAt time.Time) (string, error)
 	Logout(c context.Context, token string) error
 	LogoutFromAllDevice(c context.Context, userID uuid.UUID) error
@@ -72,6 +73,30 @@ func (s *authService) GetUser(c context.Context, userID uuid.UUID) (*model.User,
 	u, err := s.user.FetchUser(c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
+	}
+	return u, nil
+}
+
+func (s *authService) UpdateUser(c context.Context, userID uuid.UUID, r *model.UpdateUserRequest) (*model.User, error) {
+	u, err := s.user.FetchUser(c, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !util.VerifyPassword(r.OldPassword, u.PasswordHash) {
+		return nil, fmt.Errorf("invalid old password: %w", err)
+	}
+	var passwordHash string
+	if r.NewPassword != "" {
+		passwordHash, err = util.HashPassword(r.NewPassword)
+	} else {
+		passwordHash = ""
+	}
+	if err != nil {
+		return nil, err
+	}
+	u, err = s.user.UpdateUser(c, userID, r.Username, r.Email, passwordHash)
+	if err != nil {
+		return nil, err
 	}
 	return u, nil
 }

@@ -81,10 +81,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "userId")
-	var req struct {
-		Username string `json:"username" validate:"omitempty,username"`
-		Email    string `json:"email" validate:"omitempty,email"`
-	}
+	var req model.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"success":false,"error":"invalid request body"}`))
@@ -101,13 +98,11 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"success":false,"error":"invalid userId"}`))
 		return
 	}
-	u, err := h.svc.GetUser(r.Context(), uid)
+	u, err := h.svc.UpdateUser(r.Context(), uid, &req)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
 	}
-	// TODO: call UpdateUser service method when available; currently return fetched user
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": u})
 }
