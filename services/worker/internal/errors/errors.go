@@ -68,6 +68,12 @@ func StatusAndErrorMsg(err error) (statusCode int, messages []string) {
 	)
 
 	switch {
+	case errors.Is(err, ErrUserNotFound):
+		return http.StatusNotFound, []string{err.Error()}
+	case errors.Is(err, ErrDuplicateEmail), errors.Is(err, ErrDuplicateUsername), errors.Is(err, ErrDuplicateUser):
+		return http.StatusConflict, []string{err.Error()}
+	case errors.Is(err, ErrInvalidToken), errors.Is(err, ErrExpiredToken):
+		return http.StatusUnauthorized, []string{err.Error()}
 	case errors.As(err, &handlerErr):
 		return handlerErr.Status, []string{handlerErr.Message}
 	case errors.As(err, &valErrs):

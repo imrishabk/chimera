@@ -2,11 +2,15 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -41,7 +45,18 @@ func (db *userRepository) CreateUser(ctx context.Context, username, email, passw
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	); err != nil {
-		return nil, err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == appErrs.ErrUniqueViolation {
+			switch pgErr.ConstraintName {
+			case "users_email_key":
+				return nil, appErrs.ErrDuplicateEmail
+			case "users_username_key":
+				return nil, appErrs.ErrDuplicateUsername
+			default:
+				return nil, appErrs.ErrDuplicateUser
+			}
+		}
+		return nil, &appErrs.DatabaseError{Operation: "CreateUser", Err: err}
 	}
 	return &u, nil
 }
@@ -85,7 +100,18 @@ func (db *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, username
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	); err != nil {
-		return nil, err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == appErrs.ErrUniqueViolation {
+			switch pgErr.ConstraintName {
+			case "users_email_key":
+				return nil, appErrs.ErrDuplicateEmail
+			case "users_username_key":
+				return nil, appErrs.ErrDuplicateUsername
+			default:
+				return nil, appErrs.ErrDuplicateUser
+			}
+		}
+		return nil, &appErrs.DatabaseError{Operation: "CreateUser", Err: err}
 	}
 	return &u, nil
 }
@@ -106,7 +132,10 @@ func (db *userRepository) FetchUser(ctx context.Context, id uuid.UUID) (*model.U
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	); err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, appErrs.ErrUserNotFound
+		}
+		return nil, &appErrs.DatabaseError{Operation: "FetchUserByUsername", Err: err}
 	}
 	return &u, nil
 }
@@ -127,7 +156,10 @@ func (db *userRepository) FetchUserByUsername(ctx context.Context, username stri
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	); err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, appErrs.ErrUserNotFound
+		}
+		return nil, &appErrs.DatabaseError{Operation: "FetchUserByUsername", Err: err}
 	}
 	return &u, nil
 }
@@ -148,7 +180,10 @@ func (db *userRepository) FetchUserByEmail(ctx context.Context, email string) (*
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	); err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, appErrs.ErrUserNotFound
+		}
+		return nil, &appErrs.DatabaseError{Operation: "FetchUserByUsername", Err: err}
 	}
 	return &u, nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/repo"
 	"github.com/imrishabk/chimera/services/worker/internal/util"
@@ -52,19 +53,13 @@ func (s *authService) LoginUser(c context.Context, r *model.LoginRequest) (strin
 }
 
 func (s *authService) RegisterUser(c context.Context, r *model.RegisterRequest) (*model.User, error) {
-	if _, err := s.user.FetchUserByUsername(c, r.Username); err == nil {
-		return nil, fmt.Errorf("username already exists")
-	}
-	if _, err := s.user.FetchUserByEmail(c, r.Email); err == nil {
-		return nil, fmt.Errorf("email already exists")
-	}
 	passwordHash, err := util.HashPassword(r.Password)
 	if err != nil {
 		return nil, err
 	}
 	u, err := s.user.CreateUser(c, r.Username, r.Email, passwordHash)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, err
 	}
 	return u, nil
 }
@@ -72,7 +67,7 @@ func (s *authService) RegisterUser(c context.Context, r *model.RegisterRequest) 
 func (s *authService) GetUser(c context.Context, userID uuid.UUID) (*model.User, error) {
 	u, err := s.user.FetchUser(c, userID)
 	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, err
 	}
 	return u, nil
 }
@@ -83,7 +78,7 @@ func (s *authService) UpdateUser(c context.Context, userID uuid.UUID, r *model.U
 		return nil, err
 	}
 	if !util.VerifyPassword(r.OldPassword, u.PasswordHash) {
-		return nil, fmt.Errorf("invalid old password: %w", err)
+		return nil, appErrs.ErrIncorrectPassword
 	}
 	var passwordHash string
 	if r.NewPassword != "" {
@@ -104,10 +99,10 @@ func (s *authService) UpdateUser(c context.Context, userID uuid.UUID, r *model.U
 func (s *authService) RefreshUserSession(c context.Context, token string, expiresAt time.Time) (string, error) {
 	ses, err := s.userSession.FetchToken(c, token)
 	if err != nil {
-		return "", fmt.Errorf("invalid token: %w", err)
+		return "", appErrs.ErrInvalidToken
 	}
 	if ses.Expired || time.Now().After(ses.ExpiresAt) {
-		return "", fmt.Errorf("Token already expired")
+		return "", appErrs.ErrExpiredToken
 	}
 	if _, err := s.userSession.SetSessionExpiredByToken(c, token); err != nil {
 		return "", err
@@ -127,7 +122,7 @@ func (s *authService) RefreshUserSession(c context.Context, token string, expire
 
 func (s *authService) Logout(c context.Context, token string) error {
 	if token == "" {
-		return fmt.Errorf("token required")
+		return appErrs.ErrInvalidToken
 	}
 	_, err := s.userSession.SetSessionExpiredByToken(c, token)
 	return err
@@ -135,7 +130,7 @@ func (s *authService) Logout(c context.Context, token string) error {
 
 func (s *authService) LogoutFromAllDevice(c context.Context, userID uuid.UUID) error {
 	if userID == uuid.Nil {
-		return fmt.Errorf("userID required")
+		return appErrs.ErrInvalidUserID
 	}
 	_, err := s.userSession.SetSessionExpiredByUserID(c, userID)
 	return err
@@ -143,11 +138,11 @@ func (s *authService) LogoutFromAllDevice(c context.Context, userID uuid.UUID) e
 
 func (s *authService) LogoutFromAllDeviceByToken(c context.Context, token string) error {
 	if token == "" {
-		return fmt.Errorf("token required")
+		return appErrs.ErrInvalidToken
 	}
 	ses, err := s.userSession.FetchToken(c, token)
 	if err != nil {
-		return fmt.Errorf("invalid token: %w", err)
+		return appErrs.ErrInvalidToken
 	}
 	// Allow logout even if already expired - still deactivate all for idempotency
 	_, err = s.userSession.SetSessionExpiredByUserID(c, ses.UserID)
@@ -156,17 +151,17 @@ func (s *authService) LogoutFromAllDeviceByToken(c context.Context, token string
 
 func (s *authService) ValidateToken(c context.Context, token string) (*model.UserSession, error) {
 	if token == "" {
-		return nil, fmt.Errorf("token required")
+		return nil, appErrs.ErrInvalidToken
 	}
 	ses, err := s.userSession.FetchToken(c, token)
 	if err != nil {
-		return nil, fmt.Errorf("invalid token: %w", err)
+		return nil, appErrs.ErrInvalidToken
 	}
 	if ses.Expired {
-		return nil, fmt.Errorf("token expired")
+		return nil, appErrs.ErrExpiredToken
 	}
 	if time.Now().After(ses.ExpiresAt) {
-		return nil, fmt.Errorf("token expired")
+		return nil, appErrs.ErrExpiredToken
 	}
 	return ses, nil
 }
