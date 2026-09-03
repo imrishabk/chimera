@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 	"github.com/imrishabk/chimera/services/worker/internal/validator"
@@ -24,46 +25,33 @@ func NewIngestJobHandler(job service.IngestJobService, rag service.RAGService) *
 	return &IngestHandler{rag: rag, job: job}
 }
 
-func (h *IngestHandler) Push(w http.ResponseWriter, r *http.Request) {
+func (h *IngestHandler) Push(w http.ResponseWriter, r *http.Request) error {
 	var req model.IngestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid request body"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
 	if err := validator.Validate.Struct(req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
 	// if job tracking available, use it; else fallback to direct RAG
 	if h.job != nil {
 		userID := extractUserID(r)
 		job, err := h.job.CreateJob(r.Context(), &req, userID)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-			return
+			return err
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": job})
-		return
+		return writeJSONData(w, http.StatusOK, job)
 	}
 	resp, err := h.rag.IngestDocuments(r.Context(), &req)
 	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadGateway, Message: err.Error()}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": resp})
+	return writeJSONData(w, http.StatusOK, resp)
 }
 
-func (h *IngestHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *IngestHandler) Get(w http.ResponseWriter, r *http.Request) error {
 	if h.job == nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte(`{"success":false,"error":"ingest job tracking not available"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusServiceUnavailable, Message: "ingest job tracking not available"}
 	}
 	idStr := r.PathValue("jobId")
 	if idStr == "" {
@@ -78,18 +66,13 @@ func (h *IngestHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, err := parseUUID(idStr, r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid jobId"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid parameter jobId"}
 	}
 	job, err := h.job.GetJob(r.Context(), uid)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": job})
+	return writeJSONData(w, http.StatusOK, job)
 }
 
 func extractUserID(r *http.Request) uuid.UUID {
@@ -111,11 +94,9 @@ func extractUserID(r *http.Request) uuid.UUID {
 	return uuid.Nil
 }
 
-func (h *IngestHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *IngestHandler) List(w http.ResponseWriter, r *http.Request) error {
 	if h.job == nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte(`{"success":false,"error":"ingest job tracking not available"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusServiceUnavailable, Message: "ingest job tracking not available"}
 	}
 	sidStr := r.URL.Query().Get("session_id")
 	if sidStr == "" {
@@ -127,16 +108,11 @@ func (h *IngestHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	uid, err := parseUUID(sidStr, r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid sessionId"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid sessionId"}
 	}
 	jobs, err := h.job.ListJobs(r.Context(), uid, 20, 0)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": jobs})
+	return writeJSONData(w, http.StatusOK, jobs)
 }

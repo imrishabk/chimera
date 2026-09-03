@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 	"github.com/imrishabk/chimera/services/worker/internal/validator"
@@ -17,24 +18,17 @@ func NewQueryHandler(svc service.RAGService) *QueryHandler {
 	return &QueryHandler{svc: svc}
 }
 
-func (h *QueryHandler) Submit(w http.ResponseWriter, r *http.Request) {
+func (h *QueryHandler) Submit(w http.ResponseWriter, r *http.Request) error {
 	var req model.QueryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid request body"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
 	if err := validator.Validate.Struct(req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
 	resp, err := h.svc.QueryRAG(r.Context(), &req)
 	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": resp})
+	return writeJSONData(w, http.StatusOK, resp)
 }

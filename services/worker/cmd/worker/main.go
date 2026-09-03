@@ -16,7 +16,6 @@ import (
 	"github.com/imrishabk/chimera/services/worker/internal/database"
 	grpcclient "github.com/imrishabk/chimera/services/worker/internal/grpc/client"
 	"github.com/imrishabk/chimera/services/worker/internal/handler"
-	"github.com/imrishabk/chimera/services/worker/internal/middleware"
 	"github.com/imrishabk/chimera/services/worker/internal/repo"
 	"github.com/imrishabk/chimera/services/worker/internal/routes"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
@@ -71,7 +70,6 @@ func main() {
 	handlers := handler.NewHandlers(services)
 
 	r := chi.NewRouter()
-	r.Use(middleware.ErrorHandler)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.Contains(r.URL.Path, "/stream") {

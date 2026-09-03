@@ -1,14 +1,11 @@
 package model
 
-import aicorepb "github.com/imrishabk/chimera/services/worker/internal/grpc"
-
-type ResponseData interface {
-	User | Session | aicorepb.ChatResponse |
-		aicorepb.IngestResponse | aicorepb.QueryResponse | aicorepb.HealthResponse
+type APIResponse[T any] struct {
+	Success bool `json:"success"`
+	Data    T    `json:"data"`
 }
 
-type Response[T User | Session] struct {
-	Success bool   `json:"success"`
-	Data    *T     `json:"data"`
-	Error   string `json:"error"`
+type APIErrorResponse struct {
+	Success bool     `json:"success"`
+	Error   []string `json:"error"`
 }

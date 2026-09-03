@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 	"github.com/imrishabk/chimera/services/worker/internal/validator"
@@ -22,72 +23,49 @@ func NewChatHandler(svc service.ChatService) *ChatHandler {
 	return &ChatHandler{svc: svc}
 }
 
-func (h *ChatHandler) Send(w http.ResponseWriter, r *http.Request) {
+func (h *ChatHandler) Send(w http.ResponseWriter, r *http.Request) error {
 	var req model.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid request body"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
 	if err := validator.Validate.Struct(req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
 	resp, err := h.svc.CreateChat(r.Context(), &req)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": resp})
+	return writeJSONData(w, http.StatusOK, resp)
 }
 
-func (h *ChatHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *ChatHandler) List(w http.ResponseWriter, r *http.Request) error {
 	sessionIDStr := r.URL.Query().Get("session_id")
 	if sessionIDStr == "" {
 		sessionIDStr = chi.URLParam(r, "sessionId")
 	}
 	sid, err := uuid.Parse(sessionIDStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid session_id"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid session id"}
 	}
 	messages, err := h.svc.ListChats(r.Context(), sid)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "data": messages})
+	return writeJSONData(w, http.StatusOK, messages)
 }
 
-func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) {
+func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) error {
 	var req model.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"invalid request body"}`))
-		return
+		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
 	if err := validator.Validate.Struct(req); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-
 	stream, err := h.svc.ChatStream(r.Context(), &req)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte(`{"success":false,"error":"` + err.Error() + `"}`))
-		return
+		return err
 	}
-
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
@@ -103,7 +81,7 @@ func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		default:
 		}
 
@@ -117,7 +95,7 @@ func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) {
 			if flusher != nil {
 				flusher.Flush()
 			}
-			return
+			return nil
 		}
 		if err != nil {
 			errData, _ := json.Marshal(map[string]string{"error": err.Error()})
@@ -125,7 +103,7 @@ func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) {
 			if flusher != nil {
 				flusher.Flush()
 			}
-			return
+			return nil
 		}
 
 		content := ""
@@ -152,7 +130,7 @@ func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 		if resp.GetDone() {
-			return
+			return nil
 		}
 	}
 }

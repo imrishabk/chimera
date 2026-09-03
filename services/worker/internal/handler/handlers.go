@@ -1,6 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/imrishabk/chimera/services/worker/internal/errors"
+	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 )
 
@@ -29,4 +34,33 @@ func NewHandlers(svc *service.Services) *Handlers {
 		h.Query = NewQueryHandler(svc.RAG)
 	}
 	return h
+}
+
+func writeJSONData[T any](w http.ResponseWriter, status int, data T) error {
+	res := &model.APIResponse[T]{
+		Success: true,
+		Data:    data,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(res)
+	return nil
+}
+
+func writeJSONError(w http.ResponseWriter, err error) {
+	status, errs := errors.StatusAndErrorMsg(err)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(&model.APIErrorResponse{
+		Success: false,
+		Error:   errs,
+	})
+}
+
+type AppHandler func(w http.ResponseWriter, r *http.Request) error
+
+func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := fn(w, r); err != nil {
+		writeJSONError(w, err)
+	}
 }
