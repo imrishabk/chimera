@@ -2,17 +2,19 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
-	"github.com/imrishabk/chimera/services/worker/internal/errors"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
-	"github.com/imrishabk/chimera/services/worker/internal/validator"
+	appValidator "github.com/imrishabk/chimera/services/worker/internal/validator"
 )
 
 type AuthHandler struct {
@@ -28,10 +30,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return err
 	}
-	if err := validator.Validate.Struct(req); err != nil {
+	if err := appValidator.Validate.Struct(req); err != nil {
+		var valErrs validator.ValidationErrors
+		if errors.As(err, &valErrs) {
+			return &appErrs.ValidationError{Fields: valErrs}
+		}
 		return err
 	}
-
 	u, err := h.svc.RegisterUser(r.Context(), &req)
 	if err != nil {
 		return err
@@ -42,9 +47,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
-	if err := validator.Validate.Struct(req); err != nil {
+	if err := appValidator.Validate.Struct(req); err != nil {
+		var valErrs validator.ValidationErrors
+		if errors.As(err, &valErrs) {
+			return &appErrs.ValidationError{Fields: valErrs}
+		}
 		return err
 	}
 	token, err := h.svc.LoginUser(r.Context(), &req)
@@ -58,17 +67,21 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) error {
 	userID := chi.URLParam(r, "userId")
 	var req model.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
-	if err := validator.Validate.Struct(req); err != nil {
+	if err := appValidator.Validate.Struct(req); err != nil {
+		var valErrs validator.ValidationErrors
+		if errors.As(err, &valErrs) {
+			return &appErrs.ValidationError{Fields: valErrs}
+		}
 		return err
 	}
 	if req.OldPassword == req.NewPassword {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "old and new password cannot be same"}
+		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "old and new password cannot be same"}
 	}
 	uid, err := parseUUID(userID, r)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid userId"}
+		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid userId"}
 	}
 	u, err := h.svc.UpdateUser(r.Context(), uid, &req)
 	if err != nil {
@@ -86,7 +99,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		ExpiresAt string `json:"expires_at"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
 	}
 	newToken, err := h.svc.RefreshUserSession(r.Context(), token, parseExpiry(req.ExpiresAt))
 	if err != nil {
@@ -99,7 +112,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 //		userID := chi.URLParam(r, "userId")
 //		uid, err := parseUUID(userID, r)
 //		if err != nil {
-//			return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid userId"}
+//			return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid userId"}
 //		}
 //		// Ownership check: if token is present, ensure it belongs to target user
 //		if token := extractToken(r); token != "" {
@@ -121,7 +134,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 	token := extractToken(r)
 	if token == "" {
-		return &errors.HandlerError{Status: http.StatusUnauthorized, Message: "Authorization token required"}
+		return &appErrs.HandlerError{Status: http.StatusUnauthorized, Message: "Authorization token required"}
 	}
 	if err := h.svc.Logout(r.Context(), token); err != nil {
 		return err
@@ -132,7 +145,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) error {
 	token := extractToken(r)
 	if token == "" {
-		return &errors.HandlerError{Status: http.StatusUnauthorized, Message: "Authorization token required"}
+		return &appErrs.HandlerError{Status: http.StatusUnauthorized, Message: "Authorization token required"}
 	}
 	if err := h.svc.LogoutFromAllDeviceByToken(r.Context(), token); err != nil {
 		return err

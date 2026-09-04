@@ -1,12 +1,10 @@
 package errors
 
-import "errors"
-
 var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrInvalidUserID     = errors.New("invalid user id")
-	ErrDuplicateUsername = errors.New("user already taken")
-	ErrDuplicateEmail    = errors.New("email already registered")
-	ErrDuplicateUser     = errors.New("user with that login already exists")
-	ErrIncorrectPassword = errors.New("incorrect password")
+	ErrUserNotFound      = &NotFoundError{"user not found"}
+	ErrInvalidUserID     = &NotFoundError{"invalid user id"}
+	ErrDuplicateUsername = &ConflictError{"user already taken"}
+	ErrDuplicateEmail    = &ConflictError{"email already registered"}
+	ErrDuplicateUser     = &ConflictError{"user with that login already exists"}
+	ErrIncorrectPassword = &UnauthorizedError{"incorrect password"}
 )
