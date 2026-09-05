@@ -2,9 +2,12 @@ package repo
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,10 +31,27 @@ func (r *ingestJobRepository) Create(ctx context.Context, job *model.IngestJob) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING id, session_id, user_id, status, source, source_type, doc_count, error, created_at, updated_at`
 	var j model.IngestJob
-	if err := r.pool.QueryRow(ctx, query, job.SessionID, job.UserID, job.Status, job.Source, job.SourceType, job.DocCount, job.Error).Scan(
-		&j.ID, &j.SessionID, &j.UserID, &j.Status, &j.Source, &j.SourceType, &j.DocCount, &j.Error, &j.CreatedAt, &j.UpdatedAt,
+	row := r.pool.QueryRow(ctx, query,
+		job.SessionID,
+		job.UserID,
+		job.Status,
+		job.Source,
+		job.SourceType,
+		job.DocCount,
+		job.Error)
+	if err := row.Scan(
+		&j.ID,
+		&j.SessionID,
+		&j.UserID,
+		&j.Status,
+		&j.Source,
+		&j.SourceType,
+		&j.DocCount,
+		&j.Error,
+		&j.CreatedAt,
+		&j.UpdatedAt,
 	); err != nil {
-		return nil, err
+		return nil, &appErrs.DatabaseError{Operation: "IngestionJob: Create", Err: err}
 	}
 	return &j, nil
 }
@@ -40,7 +60,10 @@ func (r *ingestJobRepository) Get(ctx context.Context, id uuid.UUID) (*model.Ing
 	query := `SELECT id, session_id, user_id, status, source, source_type, doc_count, error, created_at, updated_at FROM ingest_jobs WHERE id = $1`
 	var j model.IngestJob
 	if err := r.pool.QueryRow(ctx, query, id).Scan(&j.ID, &j.SessionID, &j.UserID, &j.Status, &j.Source, &j.SourceType, &j.DocCount, &j.Error, &j.CreatedAt, &j.UpdatedAt); err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, appErrs.ErrIngestionJobNotFound
+		}
+		return nil, &appErrs.DatabaseError{Operation: "IngestionJob: Get", Err: err}
 	}
 	return &j, nil
 }
@@ -60,14 +83,20 @@ func (r *ingestJobRepository) ListBySession(ctx context.Context, sessionID uuid.
 		}
 		jobs = append(jobs, j)
 	}
-	return jobs, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, &appErrs.DatabaseError{Operation: "IngestionJob: ListBySession", Err: err}
+	}
+	return jobs, nil
 }
 
 func (r *ingestJobRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string, docCount int, errMsg string) (*model.IngestJob, error) {
 	query := `UPDATE ingest_jobs SET status = $2, doc_count = $3, error = $4 WHERE id = $1 RETURNING id, session_id, user_id, status, source, source_type, doc_count, error, created_at, updated_at`
 	var j model.IngestJob
 	if err := r.pool.QueryRow(ctx, query, id, status, docCount, errMsg).Scan(&j.ID, &j.SessionID, &j.UserID, &j.Status, &j.Source, &j.SourceType, &j.DocCount, &j.Error, &j.CreatedAt, &j.UpdatedAt); err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, appErrs.ErrIngestionJobNotFound
+		}
+		return nil, &appErrs.DatabaseError{Operation: "IngestionJob: UpdateStatus"}
 	}
 	return &j, nil
 }

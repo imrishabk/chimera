@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/imrishabk/chimera/services/worker/internal/errors"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 	"github.com/imrishabk/chimera/services/worker/internal/validator"
@@ -21,7 +21,7 @@ func NewQueryHandler(svc service.RAGService) *QueryHandler {
 func (h *QueryHandler) Submit(w http.ResponseWriter, r *http.Request) error {
 	var req model.QueryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
 	if err := validator.Validate.Struct(req); err != nil {
 		return err

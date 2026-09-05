@@ -2,17 +2,19 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
-	"github.com/imrishabk/chimera/services/worker/internal/errors"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
-	"github.com/imrishabk/chimera/services/worker/internal/validator"
+	appValidator "github.com/imrishabk/chimera/services/worker/internal/validator"
 )
 
 type ChatHandler struct {
@@ -26,9 +28,13 @@ func NewChatHandler(svc service.ChatService) *ChatHandler {
 func (h *ChatHandler) Send(w http.ResponseWriter, r *http.Request) error {
 	var req model.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
-	if err := validator.Validate.Struct(req); err != nil {
+	if err := appValidator.Validate.Struct(req); err != nil {
+		var valErrs validator.ValidationErrors
+		if errors.As(err, &valErrs) {
+			return &appErrs.ValidationError{Fields: valErrs}
+		}
 		return err
 	}
 	resp, err := h.svc.CreateChat(r.Context(), &req)
@@ -45,7 +51,7 @@ func (h *ChatHandler) List(w http.ResponseWriter, r *http.Request) error {
 	}
 	sid, err := uuid.Parse(sessionIDStr)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid session id"}
+		return appErrs.ErrInvalidSession
 	}
 	messages, err := h.svc.ListChats(r.Context(), sid)
 	if err != nil {
@@ -57,11 +63,16 @@ func (h *ChatHandler) List(w http.ResponseWriter, r *http.Request) error {
 func (h *ChatHandler) Stream(w http.ResponseWriter, r *http.Request) error {
 	var req model.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
-	if err := validator.Validate.Struct(req); err != nil {
+	if err := appValidator.Validate.Struct(req); err != nil {
+		var valErrs validator.ValidationErrors
+		if errors.As(err, &valErrs) {
+			return &appErrs.ValidationError{Fields: valErrs}
+		}
 		return err
 	}
+
 	stream, err := h.svc.ChatStream(r.Context(), &req)
 	if err != nil {
 		return err

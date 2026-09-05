@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/imrishabk/chimera/services/worker/internal/errors"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 	"github.com/imrishabk/chimera/services/worker/internal/validator"
@@ -28,7 +28,7 @@ func NewIngestJobHandler(job service.IngestJobService, rag service.RAGService) *
 func (h *IngestHandler) Push(w http.ResponseWriter, r *http.Request) error {
 	var req model.IngestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
 	if err := validator.Validate.Struct(req); err != nil {
 		return err
@@ -44,14 +44,14 @@ func (h *IngestHandler) Push(w http.ResponseWriter, r *http.Request) error {
 	}
 	resp, err := h.rag.IngestDocuments(r.Context(), &req)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadGateway, Message: err.Error()}
+		return appErrs.ErrFailedIngestRequest
 	}
 	return writeJSONData(w, http.StatusOK, resp)
 }
 
 func (h *IngestHandler) Get(w http.ResponseWriter, r *http.Request) error {
 	if h.job == nil {
-		return &errors.HandlerError{Status: http.StatusServiceUnavailable, Message: "ingest job tracking not available"}
+		return appErrs.ErrIngestionSeviceUnavailable
 	}
 	idStr := r.PathValue("jobId")
 	if idStr == "" {
@@ -66,7 +66,7 @@ func (h *IngestHandler) Get(w http.ResponseWriter, r *http.Request) error {
 	}
 	uid, err := parseUUID(idStr, r)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid parameter jobId"}
+		return appErrs.ErrInvalidJobParam
 	}
 	job, err := h.job.GetJob(r.Context(), uid)
 	if err != nil {
@@ -96,7 +96,7 @@ func extractUserID(r *http.Request) uuid.UUID {
 
 func (h *IngestHandler) List(w http.ResponseWriter, r *http.Request) error {
 	if h.job == nil {
-		return &errors.HandlerError{Status: http.StatusServiceUnavailable, Message: "ingest job tracking not available"}
+		return appErrs.ErrIngestionSeviceUnavailable
 	}
 	sidStr := r.URL.Query().Get("session_id")
 	if sidStr == "" {
@@ -108,7 +108,7 @@ func (h *IngestHandler) List(w http.ResponseWriter, r *http.Request) error {
 	}
 	uid, err := parseUUID(sidStr, r)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid sessionId"}
+		return appErrs.ErrInvalidSession
 	}
 	jobs, err := h.job.ListJobs(r.Context(), uid, 20, 0)
 	if err != nil {

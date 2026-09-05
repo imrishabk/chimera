@@ -46,7 +46,7 @@ func (db *userRepository) CreateUser(ctx context.Context, username, email, passw
 		&u.UpdatedAt,
 	); err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == appErrs.ErrUniqueViolation {
+		if errors.As(err, &pgErr) && pgErr.Code == errUniqueViolation {
 			switch pgErr.ConstraintName {
 			case "users_email_key":
 				return nil, appErrs.ErrDuplicateEmail
@@ -101,7 +101,7 @@ func (db *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, username
 		&u.UpdatedAt,
 	); err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == appErrs.ErrUniqueViolation {
+		if errors.As(err, &pgErr) && pgErr.Code == errUniqueViolation {
 			switch pgErr.ConstraintName {
 			case "users_email_key":
 				return nil, appErrs.ErrDuplicateEmail

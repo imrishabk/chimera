@@ -18,7 +18,7 @@ type NotFoundError struct {
 	msg string
 }
 
-func (e *NotFoundError) Error() string      { return e.msg }
+func (e *NotFoundError) Error() string      { return "not found" }
 func (e *NotFoundError) StatusCode() int    { return http.StatusNotFound }
 func (e *NotFoundError) Messages() []string { return []string{e.msg} }
 
@@ -26,7 +26,7 @@ type ConflictError struct {
 	msg string
 }
 
-func (e *ConflictError) Error() string      { return e.msg }
+func (e *ConflictError) Error() string      { return "conflicting resource" }
 func (e *ConflictError) StatusCode() int    { return http.StatusConflict }
 func (e *ConflictError) Messages() []string { return []string{e.msg} }
 
@@ -59,49 +59,33 @@ type DatabaseError struct {
 	Err       error
 }
 
-func (e *DatabaseError) Error() string {
-	return fmt.Sprintf("database error during %s: %v", e.Operation, e.Err)
+func (e *DatabaseError) Error() string      { return "something went wrong with database" }
+func (e *DatabaseError) StatusCode() int    { return http.StatusInternalServerError }
+func (e *DatabaseError) Messages() []string { return []string{"internal server error"} }
+
+type BadRequestError struct {
+	msg string
 }
 
-func (e *DatabaseError) Unwrap() error {
-	return e.Err
+func (e *BadRequestError) Error() string      { return "bad request" }
+func (e *BadRequestError) StatusCode() int    { return http.StatusBadRequest }
+func (e *BadRequestError) Messages() []string { return []string{e.msg} }
+
+type BadGatewayError struct {
+	msg string
 }
 
-// NotFoundError signals a missing resource — maps to 404.
-//
-//	type NotFoundError struct {
-//		Resource string
-//		ID       string
-//	}
-//
-//	func (e *NotFoundError) Error() string {
-//		return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
-//	}
-//
-// GRPCError wraps errors from downstream gRPC calls.
-type GRPCError struct {
-	Method string
-	Err    error
+func (e *BadGatewayError) Error() string      { return "bad gateway" }
+func (e *BadGatewayError) StatusCode() int    { return http.StatusBadGateway }
+func (e *BadGatewayError) Messages() []string { return []string{e.msg} }
+
+type ServiceUnavailableError struct {
+	msg string
 }
 
-func (e *GRPCError) Error() string {
-	return fmt.Sprintf("grpc error calling %s: %v", e.Method, e.Err)
-}
-
-func (e *GRPCError) Unwrap() error {
-	return e.Err
-}
-
-// HandlerError is for handler-level errors that already know their own
-// HTTP status (bad JSON body, missing query param, etc).
-type HandlerError struct {
-	Status  int
-	Message string
-}
-
-func (e *HandlerError) Error() string {
-	return fmt.Sprintf("handler error (status %d): %s", e.Status, e.Message)
-}
+func (e *ServiceUnavailableError) Error() string      { return "service unavailable" }
+func (e *ServiceUnavailableError) StatusCode() int    { return http.StatusServiceUnavailable }
+func (e *ServiceUnavailableError) Messages() []string { return []string{e.msg} }
 
 // StatusAndBody is the single central place that decides how any error
 // gets turned into an HTTP status + client-facing message + optional field errors.

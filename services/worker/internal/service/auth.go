@@ -130,7 +130,7 @@ func (s *authService) Logout(c context.Context, token string) error {
 
 func (s *authService) LogoutFromAllDevice(c context.Context, userID uuid.UUID) error {
 	if userID == uuid.Nil {
-		return appErrs.ErrInvalidUserID
+		return appErrs.ErrInvalidUser
 	}
 	_, err := s.userSession.SetSessionExpiredByUserID(c, userID)
 	return err

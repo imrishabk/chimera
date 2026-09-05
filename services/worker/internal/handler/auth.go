@@ -47,7 +47,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
 	if err := appValidator.Validate.Struct(req); err != nil {
 		var valErrs validator.ValidationErrors
@@ -67,7 +67,7 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) error {
 	userID := chi.URLParam(r, "userId")
 	var req model.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
 	if err := appValidator.Validate.Struct(req); err != nil {
 		var valErrs validator.ValidationErrors
@@ -77,11 +77,11 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	if req.OldPassword == req.NewPassword {
-		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "old and new password cannot be same"}
+		return appErrs.ErrSamePassword
 	}
 	uid, err := parseUUID(userID, r)
 	if err != nil {
-		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid userId"}
+		return appErrs.ErrInvalidUser
 	}
 	u, err := h.svc.UpdateUser(r.Context(), uid, &req)
 	if err != nil {
@@ -99,7 +99,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		ExpiresAt string `json:"expires_at"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &appErrs.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
 	newToken, err := h.svc.RefreshUserSession(r.Context(), token, parseExpiry(req.ExpiresAt))
 	if err != nil {
@@ -134,7 +134,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 	token := extractToken(r)
 	if token == "" {
-		return &appErrs.HandlerError{Status: http.StatusUnauthorized, Message: "Authorization token required"}
+		return appErrs.ErrInvalidToken
 	}
 	if err := h.svc.Logout(r.Context(), token); err != nil {
 		return err
@@ -145,7 +145,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) error {
 	token := extractToken(r)
 	if token == "" {
-		return &appErrs.HandlerError{Status: http.StatusUnauthorized, Message: "Authorization token required"}
+		return appErrs.ErrInvalidToken
 	}
 	if err := h.svc.LogoutFromAllDeviceByToken(r.Context(), token); err != nil {
 		return err

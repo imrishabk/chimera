@@ -2,15 +2,17 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
-	"github.com/imrishabk/chimera/services/worker/internal/errors"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
-	"github.com/imrishabk/chimera/services/worker/internal/validator"
+	appValidator "github.com/imrishabk/chimera/services/worker/internal/validator"
 )
 
 type SessionHandler struct {
@@ -26,7 +28,7 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		UserID uuid.UUID `json:"user_id" validate:"required"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidBody
 	}
 	if req.UserID == uuid.Nil {
 		if uidStr := chi.URLParam(r, "userId"); uidStr != "" {
@@ -35,7 +37,11 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) error {
 			}
 		}
 	}
-	if err := validator.Validate.Struct(req); err != nil {
+	if err := appValidator.Validate.Struct(req); err != nil {
+		var valErrs validator.ValidationErrors
+		if errors.As(err, &valErrs) {
+			return &appErrs.ValidationError{Fields: valErrs}
+		}
 		return err
 	}
 	ses, err := h.svc.CreateSession(r.Context(), req.UserID)
@@ -49,7 +55,7 @@ func (h *SessionHandler) List(w http.ResponseWriter, r *http.Request) error {
 	userIDStr := chi.URLParam(r, "userId")
 	uid, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidUser
 	}
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -67,7 +73,7 @@ func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) error {
 	sessionIDStr := chi.URLParam(r, "sessionId")
 	sid, err := uuid.Parse(sessionIDStr)
 	if err != nil {
-		return &errors.HandlerError{Status: http.StatusBadRequest, Message: "invalid body"}
+		return appErrs.ErrInvalidSession
 	}
 	ses, err := h.svc.GetSession(r.Context(), sid)
 	if err != nil {

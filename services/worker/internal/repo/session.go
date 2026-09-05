@@ -2,9 +2,12 @@ package repo
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	appErrs "github.com/imrishabk/chimera/services/worker/internal/errors"
 	"github.com/imrishabk/chimera/services/worker/internal/model"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -33,7 +36,7 @@ func (db *sessionRepository) CreateSession(ctx context.Context, userID uuid.UUID
 	var s model.Session
 	row := db.pool.QueryRow(ctx, query, userID)
 	if err := row.Scan(&s.ID, &s.UserID, &s.CreatedAt); err != nil {
-		return nil, err
+		return nil, &appErrs.DatabaseError{Operation: "CreateSession", Err: err}
 	}
 	return &s, nil
 }
@@ -46,7 +49,10 @@ func (db *sessionRepository) FetchSession(ctx context.Context, id uuid.UUID) (*m
 	var s model.Session
 	row := db.pool.QueryRow(ctx, query, id)
 	if err := row.Scan(&s.ID, &s.UserID, &s.CreatedAt); err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, appErrs.ErrSessionNotFound
+		}
+		return nil, &appErrs.DatabaseError{Operation: "FetchSession", Err: err}
 	}
 	return &s, nil
 }
@@ -59,7 +65,7 @@ func (db *sessionRepository) FetchSessionCount(ctx context.Context) (int, error)
 	var count int
 	row := db.pool.QueryRow(ctx, query)
 	if err := row.Scan(&count); err != nil {
-		return 0, err
+		return 0, &appErrs.DatabaseError{Operation: "FetchSessionCount", Err: err}
 	}
 	return count, nil
 }
@@ -72,7 +78,7 @@ func (db *sessionRepository) FetchSessionCountByUserID(ctx context.Context, user
 	var count int
 	row := db.pool.QueryRow(ctx, query, userID)
 	if err := row.Scan(&count); err != nil {
-		return 0, err
+		return 0, &appErrs.DatabaseError{Operation: "FetchSessionCountByUserID", Err: err}
 	}
 	return count, nil
 }
@@ -82,7 +88,6 @@ func (db *sessionRepository) ListSessionByUserID(ctx context.Context, userID uui
 	SELECT id, created_at FROM sessions WHERE user_id = $1
 	LIMIT $2 OFFSET $3
 	`
-
 	rows, err := db.pool.Query(ctx, query, userID, limit, offset)
 	if err != nil {
 		return nil, err
@@ -93,12 +98,15 @@ func (db *sessionRepository) ListSessionByUserID(ctx context.Context, userID uui
 		var r model.Session
 		r.UserID = userID
 		if err := rows.Scan(&r.ID, &r.CreatedAt); err != nil {
-			return nil, err
+			return nil, &appErrs.DatabaseError{Operation: "ListSessionByUserID", Err: err}
 		}
 		s = append(s, r)
 	}
+	if len(s) == 0 {
+		return nil, appErrs.ErrSessionNotFound
+	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, &appErrs.DatabaseError{Operation: "ListSessionByUserID", Err: err}
 	}
 	return s, nil
 }
