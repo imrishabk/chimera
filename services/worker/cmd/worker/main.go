@@ -11,6 +11,7 @@ import (
 	"charm.land/log/v2"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
 	"github.com/imrishabk/chimera/services/worker/internal/database"
@@ -21,47 +22,39 @@ import (
 	"github.com/imrishabk/chimera/services/worker/internal/service"
 )
 
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("FAILED to load .env file", "error", err)
+	}
+}
+
 func main() {
-	_ = godotenv.Load()
-
-	dbHost := os.Getenv("DB_HOSTNAME")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USERNAME")
-	dbPass := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_DATABASE")
-
-	if dbHost == "" {
-		dbHost = "127.0.0.1"
-	}
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-
-	log.Info("Creating database pool on", "host", dbHost, "port", dbPort, "database", dbName)
-	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
-		dbUser, dbPass, dbHost, dbPort, dbName)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	pool, err := database.NewPostgresConnection(ctx, connString)
+	// Create a database pool
+	pool, err := createDatabasePool()
 	if err != nil {
 		log.Fatal("Failed to connect to database", "error", err)
 	}
 	defer pool.Close()
 	log.Info("Successfully created database pool")
+
+	// Create a global repo using that pool
 	repositories := repo.New(pool)
 
-	grpcHost := os.Getenv("GRPC_AI_HOST")
-	log.Info("Creating GRPC client on", "host", grpcHost)
-	grpcClient, grpcErr := grpcclient.NewClient(grpcHost)
-	if grpcErr != nil {
+	// Setup GRPC client
+	grpcClient, err := createGRPCClient()
+	if err != nil {
 		grpcClient = nil
-		log.Info("AI Core gRPC not available", "error", grpcErr)
-	} else {
-		defer grpcClient.Close()
+		log.Fatal("AI Core gRPC not available", "error", err)
 	}
+	defer func() {
+		if err := grpcClient.Close(); err != nil {
+			log.Warn("Error while closing GRPC Client", "error", err)
+		}
+	}()
 	log.Info("Successfully created GRPC client")
+
+	// Create services using repositories
 	services := service.NewServices(repositories)
 	if grpcClient != nil {
 		rag := service.NewRAGService(grpcClient)
@@ -69,8 +62,10 @@ func main() {
 		services.IngestJob = service.NewIngestJobService(repositories.IngestJob, rag)
 	}
 
+	// Create handlers using the services
 	handlers := handler.NewHandlers(services)
 
+	// Setup Router
 	r := chi.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -101,10 +96,42 @@ func main() {
 		log.Info("Successfully registered all routes")
 	}
 
+	// Listen and serve the routes
 	log.Info("Starting server", "port", 8000, "db_connected", true)
 	if err := http.ListenAndServe(":8000", r); err != nil {
 		log.Fatal("failed to start the server!")
 	}
+}
+
+func createDatabasePool() (*pgxpool.Pool, error) {
+	dbHost := os.Getenv("DB_HOSTNAME")
+	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USERNAME")
+	dbPass := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_DATABASE")
+
+	if dbHost == "" {
+		dbHost = "127.0.0.1"
+	}
+	if dbPort == "" {
+		dbPort = "5432"
+	}
+	log.Info("Creating database pool on", "host", dbHost, "port", dbPort, "database", dbName)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+		dbUser, dbPass, dbHost, dbPort, dbName)
+	pool, err := database.NewPostgresConnection(ctx, connString)
+	return pool, err
+}
+
+func createGRPCClient() (*grpcclient.Client, error) {
+	grpcHost := os.Getenv("GRPC_AI_HOST")
+	log.Info("Creating GRPC client on", "host", grpcHost)
+	grpcClient, grpcErr := grpcclient.NewClient(grpcHost)
+	return grpcClient, grpcErr
 }
 
 func defaultRoute(w http.ResponseWriter, r *http.Request) {
