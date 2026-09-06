@@ -133,10 +133,11 @@ class AIServiceServicer(ai_core_pb2_grpc.AIServiceServicer):
             metadata = {
                 "session_id": session_id,
                 "source": chunk.source,
-                "source_type": chunk.doc_id,
+                "source_type": chunk.source_type,
                 "doc_id": chunk.doc_id,
                 "chunk_index": chunk.chunk_index,
-                "page_title": chunk.chapter,
+                "page_title": chunk.page_title,
+                "chapter": chunk.chapter,
                 **chunk.metadata,
             }
             lc_documents.append(

@@ -31,4 +31,14 @@ var (
 
 	// IngestionJob
 	ErrIngestionJobNotFound = &NotFoundError{"ingestion job not found"}
+	ErrDuplicateIngestJob   = &ConflictError{"identical content already ingested in this session"}
+
+	// Upload ingestion
+	ErrInvalidUpload   = &BadRequestError{"invalid upload: session_id and at least one file are required"}
+	ErrTooManyFiles    = &BadRequestError{"too many files in upload"}
+	ErrFileTooLarge    = &PayloadTooLargeError{"file exceeds per-file size limit"}
+	ErrRequestTooLarge = &PayloadTooLargeError{"upload exceeds total request size limit"}
+	ErrUnsupportedFile = &BadRequestError{"unsupported file type"}
+	ErrUploadQueueFull = &ServiceUnavailableError{"ingestion queue full, try again later"}
+	ErrURLFetchDisabled = &BadRequestError{"url fetch disabled"}
 )

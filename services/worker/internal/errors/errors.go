@@ -87,6 +87,14 @@ func (e *ServiceUnavailableError) Error() string      { return "service unavaila
 func (e *ServiceUnavailableError) StatusCode() int    { return http.StatusServiceUnavailable }
 func (e *ServiceUnavailableError) Messages() []string { return []string{e.msg} }
 
+type PayloadTooLargeError struct {
+	msg string
+}
+
+func (e *PayloadTooLargeError) Error() string      { return "payload too large" }
+func (e *PayloadTooLargeError) StatusCode() int    { return http.StatusRequestEntityTooLarge }
+func (e *PayloadTooLargeError) Messages() []string { return []string{e.msg} }
+
 // StatusAndBody is the single central place that decides how any error
 // gets turned into an HTTP status + client-facing message + optional field errors.
 //
