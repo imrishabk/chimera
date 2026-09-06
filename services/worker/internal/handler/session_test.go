@@ -67,7 +67,7 @@ func TestSessionCreateInvalidJSON(t *testing.T) {
 	h := NewSessionHandler(&mockChatService{})
 	req := httptest.NewRequest(http.MethodPost, "/session", strings.NewReader("{invalid"))
 	w := httptest.NewRecorder()
-	h.Create(w, req)
+	AppHandler(h.Create).ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("want 400 got %d", w.Code)
 	}
@@ -77,7 +77,7 @@ func TestSessionCreateMissingUserID(t *testing.T) {
 	h := NewSessionHandler(&mockChatService{})
 	req := httptest.NewRequest(http.MethodPost, "/session", strings.NewReader(`{}`))
 	w := httptest.NewRecorder()
-	h.Create(w, req)
+	AppHandler(h.Create).ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("want 400 for missing user_id, got %d", w.Code)
 	}
@@ -87,7 +87,7 @@ func TestSessionGetInvalidID(t *testing.T) {
 	h := NewSessionHandler(&mockChatService{})
 	req := httptest.NewRequest(http.MethodGet, "/session/invalid", nil)
 	w := httptest.NewRecorder()
-	h.Get(w, req)
+	AppHandler(h.Get).ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("want 400 got %d", w.Code)
 	}

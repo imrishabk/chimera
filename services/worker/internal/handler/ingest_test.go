@@ -33,7 +33,7 @@ func TestIngestPushInvalidJSON(t *testing.T) {
 	h := NewIngestHandler(&mockRAG{})
 	req := httptest.NewRequest(http.MethodPost, "/ingestion", strings.NewReader("{bad"))
 	w := httptest.NewRecorder()
-	h.Push(w, req)
+	AppHandler(h.Push).ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("want 400 got %d", w.Code)
 	}
@@ -43,7 +43,7 @@ func TestIngestPushValidationFail(t *testing.T) {
 	h := NewIngestHandler(&mockRAG{})
 	req := httptest.NewRequest(http.MethodPost, "/ingestion", strings.NewReader(`{}`))
 	w := httptest.NewRecorder()
-	h.Push(w, req)
+	AppHandler(h.Push).ServeHTTP(w, req)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("want 400 got %d", w.Code)
 	}
@@ -55,7 +55,7 @@ func TestIngestPushUnavailable(t *testing.T) {
 	}}}
 	req := httptest.NewRequest(http.MethodPost, "/ingestion", strings.NewReader(`{"session_id":"00000000-0000-0000-0000-000000000001","content":"hi"}`))
 	w := httptest.NewRecorder()
-	h.Push(w, req)
+	AppHandler(h.Push).ServeHTTP(w, req)
 	if w.Code != http.StatusBadGateway {
 		t.Errorf("want 502 got %d", w.Code)
 	}

@@ -64,7 +64,9 @@ func main() {
 	log.Info("Successfully created GRPC client")
 	services := service.NewServices(repositories)
 	if grpcClient != nil {
-		services.RAG = service.NewRAGService(grpcClient)
+		rag := service.NewRAGService(grpcClient)
+		services.RAG = rag
+		services.IngestJob = service.NewIngestJobService(repositories.IngestJob, rag)
 	}
 
 	handlers := handler.NewHandlers(services)

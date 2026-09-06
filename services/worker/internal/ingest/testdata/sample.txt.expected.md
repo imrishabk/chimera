@@ -1,0 +1,5 @@
+# sample.txt
+
+Chimera plain text sample.
+
+This is the second paragraph with enough content to survive cleaning.
