@@ -55,8 +55,6 @@ func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 		r.Use(authMiddleware)
 		if handlers.Ingest != nil {
 			r.Method(http.MethodPost, "/", handler.AppHandler(handlers.Ingest.Push))
-			r.Method(http.MethodPost, "/upload", handler.AppHandler(handlers.Ingest.Upload))
-			r.Method(http.MethodPost, "/fetch", handler.AppHandler(handlers.Ingest.FetchURLs))
 			r.Method(http.MethodGet, "/{jobId}", handler.AppHandler(handlers.Ingest.Get))
 			r.Method(http.MethodGet, "/list/{sessionId}", handler.AppHandler(handlers.Ingest.List))
 		} else {
