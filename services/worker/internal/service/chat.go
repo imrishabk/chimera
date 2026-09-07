@@ -63,11 +63,18 @@ func (s *chatService) ListSessions(c context.Context, userID uuid.UUID, limit, o
 }
 
 func (s *chatService) ListChats(c context.Context, sessionID uuid.UUID) ([]*aicorepb.Message, error) {
-	// Chat history is stored in Python AI Core via PostgresChatMessageHistory.
-	// For now return empty; when QueryRAG/Chat history fetch is needed, add gRPC method.
-	_ = c
-	_ = sessionID
-	return []*aicorepb.Message{}, nil
+	// History lives in AI Core (PostgresChatMessageHistory), fetched over gRPC.
+	if s.grpcClient == nil {
+		return []*aicorepb.Message{}, nil
+	}
+	resp, err := s.grpcClient.GetChatHistory(c, sessionID.String())
+	if err != nil {
+		return nil, fmt.Errorf("AI Core GetChatHistory call failed: %w", err)
+	}
+	if resp == nil {
+		return []*aicorepb.Message{}, nil
+	}
+	return resp.GetMessages(), nil
 }
 
 func (s *chatService) CreateChat(c context.Context, r *model.ChatRequest) (*aicorepb.ChatResponse, error) {

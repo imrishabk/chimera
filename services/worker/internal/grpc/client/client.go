@@ -49,6 +49,13 @@ func (c *Client) ChatStream(ctx context.Context, sessionID string, messages []*a
 	return c.client.ChatStream(ctx, req)
 }
 
+func (c *Client) GetChatHistory(ctx context.Context, sessionID string) (*aicorepb.ChatHistoryResponse, error) {
+	req := &aicorepb.ChatHistoryRequest{
+		SessionId: sessionID,
+	}
+	return c.client.GetChatHistory(ctx, req)
+}
+
 func (c *Client) IngestDocuments(ctx context.Context, sessionID string, documents []*aicorepb.Document) (*aicorepb.IngestResponse, error) {
 	req := &aicorepb.IngestRequest{
 		SessionId: sessionID,

@@ -17,6 +17,7 @@ import (
 	"github.com/imrishabk/chimera/services/worker/internal/database"
 	grpcclient "github.com/imrishabk/chimera/services/worker/internal/grpc/client"
 	"github.com/imrishabk/chimera/services/worker/internal/handler"
+	"github.com/imrishabk/chimera/services/worker/internal/middleware"
 	"github.com/imrishabk/chimera/services/worker/internal/repo"
 	"github.com/imrishabk/chimera/services/worker/internal/routes"
 	"github.com/imrishabk/chimera/services/worker/internal/service"
@@ -97,9 +98,11 @@ func main() {
 	}
 
 	// Listen and serve the routes
+	// CORS wraps the whole router (not chi Use) so preflight OPTIONS is
+	// answered before chi's 405 handling.
 	log.Info("Starting server", "port", 8000, "db_connected", true)
-	if err := http.ListenAndServe(":8000", r); err != nil {
-		log.Fatal("failed to start the server!")
+	if err := http.ListenAndServe(":8000", middleware.CORS(r)); err != nil {
+		log.Fatal("failed to start the server!", "error", err)
 	}
 }
 

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AIService_Chat_FullMethodName            = "/ai_core.v1.AIService/Chat"
 	AIService_ChatStream_FullMethodName      = "/ai_core.v1.AIService/ChatStream"
+	AIService_GetChatHistory_FullMethodName  = "/ai_core.v1.AIService/GetChatHistory"
 	AIService_IngestDocuments_FullMethodName = "/ai_core.v1.AIService/IngestDocuments"
 	AIService_QueryRAG_FullMethodName        = "/ai_core.v1.AIService/QueryRAG"
 	AIService_Health_FullMethodName          = "/ai_core.v1.AIService/Health"
@@ -32,6 +33,7 @@ const (
 type AIServiceClient interface {
 	Chat(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (*ChatResponse, error)
 	ChatStream(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatResponse], error)
+	GetChatHistory(ctx context.Context, in *ChatHistoryRequest, opts ...grpc.CallOption) (*ChatHistoryResponse, error)
 	IngestDocuments(ctx context.Context, in *IngestRequest, opts ...grpc.CallOption) (*IngestResponse, error)
 	QueryRAG(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
@@ -74,6 +76,16 @@ func (c *aIServiceClient) ChatStream(ctx context.Context, in *ChatRequest, opts 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_ChatStreamClient = grpc.ServerStreamingClient[ChatResponse]
 
+func (c *aIServiceClient) GetChatHistory(ctx context.Context, in *ChatHistoryRequest, opts ...grpc.CallOption) (*ChatHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChatHistoryResponse)
+	err := c.cc.Invoke(ctx, AIService_GetChatHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aIServiceClient) IngestDocuments(ctx context.Context, in *IngestRequest, opts ...grpc.CallOption) (*IngestResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(IngestResponse)
@@ -110,6 +122,7 @@ func (c *aIServiceClient) Health(ctx context.Context, in *HealthRequest, opts ..
 type AIServiceServer interface {
 	Chat(context.Context, *ChatRequest) (*ChatResponse, error)
 	ChatStream(*ChatRequest, grpc.ServerStreamingServer[ChatResponse]) error
+	GetChatHistory(context.Context, *ChatHistoryRequest) (*ChatHistoryResponse, error)
 	IngestDocuments(context.Context, *IngestRequest) (*IngestResponse, error)
 	QueryRAG(context.Context, *QueryRequest) (*QueryResponse, error)
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
@@ -128,6 +141,9 @@ func (UnimplementedAIServiceServer) Chat(context.Context, *ChatRequest) (*ChatRe
 }
 func (UnimplementedAIServiceServer) ChatStream(*ChatRequest, grpc.ServerStreamingServer[ChatResponse]) error {
 	return status.Error(codes.Unimplemented, "method ChatStream not implemented")
+}
+func (UnimplementedAIServiceServer) GetChatHistory(context.Context, *ChatHistoryRequest) (*ChatHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetChatHistory not implemented")
 }
 func (UnimplementedAIServiceServer) IngestDocuments(context.Context, *IngestRequest) (*IngestResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method IngestDocuments not implemented")
@@ -187,6 +203,24 @@ func _AIService_ChatStream_Handler(srv interface{}, stream grpc.ServerStream) er
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_ChatStreamServer = grpc.ServerStreamingServer[ChatResponse]
+
+func _AIService_GetChatHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChatHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GetChatHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GetChatHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GetChatHistory(ctx, req.(*ChatHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 func _AIService_IngestDocuments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(IngestRequest)
@@ -252,6 +286,10 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Chat",
 			Handler:    _AIService_Chat_Handler,
+		},
+		{
+			MethodName: "GetChatHistory",
+			Handler:    _AIService_GetChatHistory_Handler,
 		},
 		{
 			MethodName: "IngestDocuments",

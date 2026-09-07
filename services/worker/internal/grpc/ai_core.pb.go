@@ -202,6 +202,102 @@ func (x *ChatResponse) GetDone() bool {
 	return false
 }
 
+type ChatHistoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChatHistoryRequest) Reset() {
+	*x = ChatHistoryRequest{}
+	mi := &file_ai_core_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChatHistoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChatHistoryRequest) ProtoMessage() {}
+
+func (x *ChatHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_core_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChatHistoryRequest.ProtoReflect.Descriptor instead.
+func (*ChatHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_ai_core_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ChatHistoryRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type ChatHistoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Messages      []*Message             `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChatHistoryResponse) Reset() {
+	*x = ChatHistoryResponse{}
+	mi := &file_ai_core_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChatHistoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChatHistoryResponse) ProtoMessage() {}
+
+func (x *ChatHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_core_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChatHistoryResponse.ProtoReflect.Descriptor instead.
+func (*ChatHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_ai_core_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ChatHistoryResponse) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *ChatHistoryResponse) GetMessages() []*Message {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
 type IngestRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -212,7 +308,7 @@ type IngestRequest struct {
 
 func (x *IngestRequest) Reset() {
 	*x = IngestRequest{}
-	mi := &file_ai_core_proto_msgTypes[3]
+	mi := &file_ai_core_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -224,7 +320,7 @@ func (x *IngestRequest) String() string {
 func (*IngestRequest) ProtoMessage() {}
 
 func (x *IngestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[3]
+	mi := &file_ai_core_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -237,7 +333,7 @@ func (x *IngestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestRequest.ProtoReflect.Descriptor instead.
 func (*IngestRequest) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{3}
+	return file_ai_core_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *IngestRequest) GetSessionId() string {
@@ -270,7 +366,7 @@ type Document struct {
 
 func (x *Document) Reset() {
 	*x = Document{}
-	mi := &file_ai_core_proto_msgTypes[4]
+	mi := &file_ai_core_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -282,7 +378,7 @@ func (x *Document) String() string {
 func (*Document) ProtoMessage() {}
 
 func (x *Document) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[4]
+	mi := &file_ai_core_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -295,7 +391,7 @@ func (x *Document) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Document.ProtoReflect.Descriptor instead.
 func (*Document) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{4}
+	return file_ai_core_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Document) GetContent() string {
@@ -366,7 +462,7 @@ type IngestResponse struct {
 
 func (x *IngestResponse) Reset() {
 	*x = IngestResponse{}
-	mi := &file_ai_core_proto_msgTypes[5]
+	mi := &file_ai_core_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -378,7 +474,7 @@ func (x *IngestResponse) String() string {
 func (*IngestResponse) ProtoMessage() {}
 
 func (x *IngestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[5]
+	mi := &file_ai_core_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -391,7 +487,7 @@ func (x *IngestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IngestResponse.ProtoReflect.Descriptor instead.
 func (*IngestResponse) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{5}
+	return file_ai_core_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *IngestResponse) GetSuccess() bool {
@@ -434,7 +530,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_ai_core_proto_msgTypes[6]
+	mi := &file_ai_core_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -446,7 +542,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[6]
+	mi := &file_ai_core_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -459,7 +555,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{6}
+	return file_ai_core_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *QueryRequest) GetSessionId() string {
@@ -501,7 +597,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_ai_core_proto_msgTypes[7]
+	mi := &file_ai_core_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -513,7 +609,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[7]
+	mi := &file_ai_core_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -526,7 +622,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{7}
+	return file_ai_core_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *QueryResponse) GetAnswer() string {
@@ -561,7 +657,7 @@ type Source struct {
 
 func (x *Source) Reset() {
 	*x = Source{}
-	mi := &file_ai_core_proto_msgTypes[8]
+	mi := &file_ai_core_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +669,7 @@ func (x *Source) String() string {
 func (*Source) ProtoMessage() {}
 
 func (x *Source) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[8]
+	mi := &file_ai_core_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +682,7 @@ func (x *Source) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Source.ProtoReflect.Descriptor instead.
 func (*Source) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{8}
+	return file_ai_core_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Source) GetContent() string {
@@ -618,7 +714,7 @@ type HealthRequest struct {
 
 func (x *HealthRequest) Reset() {
 	*x = HealthRequest{}
-	mi := &file_ai_core_proto_msgTypes[9]
+	mi := &file_ai_core_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -630,7 +726,7 @@ func (x *HealthRequest) String() string {
 func (*HealthRequest) ProtoMessage() {}
 
 func (x *HealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[9]
+	mi := &file_ai_core_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,7 +739,7 @@ func (x *HealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthRequest.ProtoReflect.Descriptor instead.
 func (*HealthRequest) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{9}
+	return file_ai_core_proto_rawDescGZIP(), []int{11}
 }
 
 type HealthResponse struct {
@@ -657,7 +753,7 @@ type HealthResponse struct {
 
 func (x *HealthResponse) Reset() {
 	*x = HealthResponse{}
-	mi := &file_ai_core_proto_msgTypes[10]
+	mi := &file_ai_core_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -669,7 +765,7 @@ func (x *HealthResponse) String() string {
 func (*HealthResponse) ProtoMessage() {}
 
 func (x *HealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ai_core_proto_msgTypes[10]
+	mi := &file_ai_core_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -682,7 +778,7 @@ func (x *HealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResponse.ProtoReflect.Descriptor instead.
 func (*HealthResponse) Descriptor() ([]byte, []int) {
-	return file_ai_core_proto_rawDescGZIP(), []int{10}
+	return file_ai_core_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *HealthResponse) GetStatus() string {
@@ -726,7 +822,14 @@ const file_ai_core_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12-\n" +
 	"\amessage\x18\x02 \x01(\v2\x13.ai_core.v1.MessageR\amessage\x12\x12\n" +
-	"\x04done\x18\x03 \x01(\bR\x04done\"b\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\"3\n" +
+	"\x12ChatHistoryRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"e\n" +
+	"\x13ChatHistoryResponse\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12/\n" +
+	"\bmessages\x18\x02 \x03(\v2\x13.ai_core.v1.MessageR\bmessages\"b\n" +
 	"\rIngestRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x122\n" +
@@ -776,11 +879,12 @@ const file_ai_core_proto_rawDesc = "" +
 	"\x0eHealthResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x128\n" +
-	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp2\xd5\x02\n" +
+	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp2\xa8\x03\n" +
 	"\tAIService\x129\n" +
 	"\x04Chat\x12\x17.ai_core.v1.ChatRequest\x1a\x18.ai_core.v1.ChatResponse\x12A\n" +
 	"\n" +
-	"ChatStream\x12\x17.ai_core.v1.ChatRequest\x1a\x18.ai_core.v1.ChatResponse0\x01\x12H\n" +
+	"ChatStream\x12\x17.ai_core.v1.ChatRequest\x1a\x18.ai_core.v1.ChatResponse0\x01\x12Q\n" +
+	"\x0eGetChatHistory\x12\x1e.ai_core.v1.ChatHistoryRequest\x1a\x1f.ai_core.v1.ChatHistoryResponse\x12H\n" +
 	"\x0fIngestDocuments\x12\x19.ai_core.v1.IngestRequest\x1a\x1a.ai_core.v1.IngestResponse\x12?\n" +
 	"\bQueryRAG\x12\x18.ai_core.v1.QueryRequest\x1a\x19.ai_core.v1.QueryResponse\x12?\n" +
 	"\x06Health\x12\x19.ai_core.v1.HealthRequest\x1a\x1a.ai_core.v1.HealthResponseBEZCgithub.com/imrishabk/chimera/services/worker/internal/grpc;aicorepbb\x06proto3"
@@ -797,48 +901,53 @@ func file_ai_core_proto_rawDescGZIP() []byte {
 	return file_ai_core_proto_rawDescData
 }
 
-var file_ai_core_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_ai_core_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_ai_core_proto_goTypes = []any{
 	(*Message)(nil),               // 0: ai_core.v1.Message
 	(*ChatRequest)(nil),           // 1: ai_core.v1.ChatRequest
 	(*ChatResponse)(nil),          // 2: ai_core.v1.ChatResponse
-	(*IngestRequest)(nil),         // 3: ai_core.v1.IngestRequest
-	(*Document)(nil),              // 4: ai_core.v1.Document
-	(*IngestResponse)(nil),        // 5: ai_core.v1.IngestResponse
-	(*QueryRequest)(nil),          // 6: ai_core.v1.QueryRequest
-	(*QueryResponse)(nil),         // 7: ai_core.v1.QueryResponse
-	(*Source)(nil),                // 8: ai_core.v1.Source
-	(*HealthRequest)(nil),         // 9: ai_core.v1.HealthRequest
-	(*HealthResponse)(nil),        // 10: ai_core.v1.HealthResponse
-	nil,                           // 11: ai_core.v1.Document.MetadataEntry
-	nil,                           // 12: ai_core.v1.QueryRequest.FilterEntry
-	nil,                           // 13: ai_core.v1.Source.MetadataEntry
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
+	(*ChatHistoryRequest)(nil),    // 3: ai_core.v1.ChatHistoryRequest
+	(*ChatHistoryResponse)(nil),   // 4: ai_core.v1.ChatHistoryResponse
+	(*IngestRequest)(nil),         // 5: ai_core.v1.IngestRequest
+	(*Document)(nil),              // 6: ai_core.v1.Document
+	(*IngestResponse)(nil),        // 7: ai_core.v1.IngestResponse
+	(*QueryRequest)(nil),          // 8: ai_core.v1.QueryRequest
+	(*QueryResponse)(nil),         // 9: ai_core.v1.QueryResponse
+	(*Source)(nil),                // 10: ai_core.v1.Source
+	(*HealthRequest)(nil),         // 11: ai_core.v1.HealthRequest
+	(*HealthResponse)(nil),        // 12: ai_core.v1.HealthResponse
+	nil,                           // 13: ai_core.v1.Document.MetadataEntry
+	nil,                           // 14: ai_core.v1.QueryRequest.FilterEntry
+	nil,                           // 15: ai_core.v1.Source.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 16: google.protobuf.Timestamp
 }
 var file_ai_core_proto_depIdxs = []int32{
 	0,  // 0: ai_core.v1.ChatRequest.messages:type_name -> ai_core.v1.Message
 	0,  // 1: ai_core.v1.ChatResponse.message:type_name -> ai_core.v1.Message
-	4,  // 2: ai_core.v1.IngestRequest.documents:type_name -> ai_core.v1.Document
-	11, // 3: ai_core.v1.Document.metadata:type_name -> ai_core.v1.Document.MetadataEntry
-	12, // 4: ai_core.v1.QueryRequest.filter:type_name -> ai_core.v1.QueryRequest.FilterEntry
-	8,  // 5: ai_core.v1.QueryResponse.sources:type_name -> ai_core.v1.Source
-	13, // 6: ai_core.v1.Source.metadata:type_name -> ai_core.v1.Source.MetadataEntry
-	14, // 7: ai_core.v1.HealthResponse.timestamp:type_name -> google.protobuf.Timestamp
-	1,  // 8: ai_core.v1.AIService.Chat:input_type -> ai_core.v1.ChatRequest
-	1,  // 9: ai_core.v1.AIService.ChatStream:input_type -> ai_core.v1.ChatRequest
-	3,  // 10: ai_core.v1.AIService.IngestDocuments:input_type -> ai_core.v1.IngestRequest
-	6,  // 11: ai_core.v1.AIService.QueryRAG:input_type -> ai_core.v1.QueryRequest
-	9,  // 12: ai_core.v1.AIService.Health:input_type -> ai_core.v1.HealthRequest
-	2,  // 13: ai_core.v1.AIService.Chat:output_type -> ai_core.v1.ChatResponse
-	2,  // 14: ai_core.v1.AIService.ChatStream:output_type -> ai_core.v1.ChatResponse
-	5,  // 15: ai_core.v1.AIService.IngestDocuments:output_type -> ai_core.v1.IngestResponse
-	7,  // 16: ai_core.v1.AIService.QueryRAG:output_type -> ai_core.v1.QueryResponse
-	10, // 17: ai_core.v1.AIService.Health:output_type -> ai_core.v1.HealthResponse
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	0,  // 2: ai_core.v1.ChatHistoryResponse.messages:type_name -> ai_core.v1.Message
+	6,  // 3: ai_core.v1.IngestRequest.documents:type_name -> ai_core.v1.Document
+	13, // 4: ai_core.v1.Document.metadata:type_name -> ai_core.v1.Document.MetadataEntry
+	14, // 5: ai_core.v1.QueryRequest.filter:type_name -> ai_core.v1.QueryRequest.FilterEntry
+	10, // 6: ai_core.v1.QueryResponse.sources:type_name -> ai_core.v1.Source
+	15, // 7: ai_core.v1.Source.metadata:type_name -> ai_core.v1.Source.MetadataEntry
+	16, // 8: ai_core.v1.HealthResponse.timestamp:type_name -> google.protobuf.Timestamp
+	1,  // 9: ai_core.v1.AIService.Chat:input_type -> ai_core.v1.ChatRequest
+	1,  // 10: ai_core.v1.AIService.ChatStream:input_type -> ai_core.v1.ChatRequest
+	3,  // 11: ai_core.v1.AIService.GetChatHistory:input_type -> ai_core.v1.ChatHistoryRequest
+	5,  // 12: ai_core.v1.AIService.IngestDocuments:input_type -> ai_core.v1.IngestRequest
+	8,  // 13: ai_core.v1.AIService.QueryRAG:input_type -> ai_core.v1.QueryRequest
+	11, // 14: ai_core.v1.AIService.Health:input_type -> ai_core.v1.HealthRequest
+	2,  // 15: ai_core.v1.AIService.Chat:output_type -> ai_core.v1.ChatResponse
+	2,  // 16: ai_core.v1.AIService.ChatStream:output_type -> ai_core.v1.ChatResponse
+	4,  // 17: ai_core.v1.AIService.GetChatHistory:output_type -> ai_core.v1.ChatHistoryResponse
+	7,  // 18: ai_core.v1.AIService.IngestDocuments:output_type -> ai_core.v1.IngestResponse
+	9,  // 19: ai_core.v1.AIService.QueryRAG:output_type -> ai_core.v1.QueryResponse
+	12, // 20: ai_core.v1.AIService.Health:output_type -> ai_core.v1.HealthResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_ai_core_proto_init() }
@@ -852,7 +961,7 @@ func file_ai_core_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ai_core_proto_rawDesc), len(file_ai_core_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
