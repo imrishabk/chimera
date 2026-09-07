@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"charm.land/log/v2"
@@ -30,7 +32,7 @@ func init() {
 	}
 }
 
-func main() {
+func initializeServer() *http.Server {
 	// Create a database pool
 	pool, err := createDatabasePool()
 	if err != nil {
@@ -100,10 +102,39 @@ func main() {
 	// Listen and serve the routes
 	// CORS wraps the whole router (not chi Use) so preflight OPTIONS is
 	// answered before chi's 405 handling.
-	log.Info("Starting server", "port", 8000, "db_connected", true)
-	if err := http.ListenAndServe(":8000", middleware.CORS(r)); err != nil {
-		log.Fatal("failed to start the server!", "error", err)
+	srv := &http.Server{
+		Addr:    ":8000",
+		Handler: middleware.CORS(r),
 	}
+	return srv
+	// log.Info("Starting server", "port", 8000, "db_connected", true)
+	// if err := http.ListenAndServe(":8000", middleware.CORS(r)); err != nil {
+	// 	log.Fatal("failed to start the server!", "error", err)
+	// }
+}
+
+func main() {
+	// Server initialization & serve
+	srv := initializeServer()
+	log.Info("Starting server", "port", 8000, "db_connected", true)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("failed to start server", "error", err)
+		}
+	}()
+
+	// Graceful shutdown of the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-quit
+	log.Info("Signal received to shutdown server", "signal", sig)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("forced shutdown", "error", err)
+	}
+	log.Info("Server shutdown gracefully", "error", nil)
 }
 
 func createDatabasePool() (*pgxpool.Pool, error) {
