@@ -9,6 +9,7 @@ option go_package = "github.com/imrishabk/chimera/services/worker/internal/grpc;
 service AIService {
   rpc Chat(ChatRequest) returns (ChatResponse);
   rpc ChatStream(ChatRequest) returns (stream ChatResponse);
+  rpc GetChatHistory(ChatHistoryRequest) returns (ChatHistoryResponse);
   rpc IngestDocuments(IngestRequest) returns (IngestResponse);
   rpc QueryRAG(QueryRequest) returns (QueryResponse);
   rpc Health(HealthRequest) returns (HealthResponse);
@@ -30,6 +31,15 @@ message ChatResponse {
   string session_id = 1;
   Message message = 2; // Single token chunk when streaming
   bool done = 3;
+}
+
+message ChatHistoryRequest {
+  string session_id = 1;
+}
+
+message ChatHistoryResponse {
+  string session_id = 1;
+  repeated Message messages = 2;
 }
 
 message IngestRequest {
