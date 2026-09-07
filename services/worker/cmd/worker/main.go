@@ -32,6 +32,30 @@ func init() {
 	}
 }
 
+func main() {
+	// Server initialization & serve
+	srv := initializeServer()
+	log.Info("Starting server", "port", 8000, "db_connected", true)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("failed to start server", "error", err)
+		}
+	}()
+
+	// Graceful shutdown of the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-quit
+	log.Info("Signal received to shutdown server", "signal", sig)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("forced shutdown", "error", err)
+	}
+	log.Info("Server shutdown gracefully", "error", nil)
+}
+
 func initializeServer() *http.Server {
 	// Create a database pool
 	pool, err := createDatabasePool()
@@ -111,30 +135,6 @@ func initializeServer() *http.Server {
 	// if err := http.ListenAndServe(":8000", middleware.CORS(r)); err != nil {
 	// 	log.Fatal("failed to start the server!", "error", err)
 	// }
-}
-
-func main() {
-	// Server initialization & serve
-	srv := initializeServer()
-	log.Info("Starting server", "port", 8000, "db_connected", true)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("failed to start server", "error", err)
-		}
-	}()
-
-	// Graceful shutdown of the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	sig := <-quit
-	log.Info("Signal received to shutdown server", "signal", sig)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("forced shutdown", "error", err)
-	}
-	log.Info("Server shutdown gracefully", "error", nil)
 }
 
 func createDatabasePool() (*pgxpool.Pool, error) {
