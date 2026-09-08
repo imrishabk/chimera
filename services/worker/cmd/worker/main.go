@@ -157,7 +157,7 @@ func createDatabasePool() (*pgxpool.Pool, error) {
 
 	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
 		dbUser, dbPass, dbHost, dbPort, dbName)
-	pool, err := database.NewPostgresConnection(ctx, connString)
+	pool, err := database.NewPostgresConnectionPool(ctx, connString)
 	return pool, err
 }
 
@@ -170,6 +170,9 @@ func createGRPCClient() (*grpcclient.Client, error) {
 
 func defaultRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	//There is no point in checking error of w.Write()
+	//nolint:errcheck
 	w.Write([]byte(`<body style="background:#1e1e1e;color:#d4d4d4"><pre>
 		99 104 105 109 101 114 97
 

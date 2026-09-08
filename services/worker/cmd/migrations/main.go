@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"strings"
 
 	"charm.land/log/v2"
-	"github.com/imrishabk/chimera/services/worker/internal/util"
 	"github.com/imrishabk/chimera/services/worker/migrations"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
@@ -14,7 +14,9 @@ import (
 )
 
 func init() {
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("failed to load .env file", "error", err)
+	}
 }
 
 func main() {
@@ -22,7 +24,11 @@ func main() {
 	if len(args) > 2 {
 		cmd = strings.ToLower(args[1])
 	}
-	dsn := util.ConstructDSN()
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+		os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"),
+		os.Getenv("DB_DATABASE"))
+
 	conn, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatal(err)

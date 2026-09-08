@@ -27,7 +27,7 @@ func testPool(t *testing.T) *pgxpool.Pool {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	pool, err := database.NewPostgresConnection(ctx, dsn)
+	pool, err := database.NewPostgresConnectionPool(ctx, dsn)
 	if err != nil {
 		t.Skipf("db not reachable: %v", err)
 	}

@@ -10,15 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func ConstructDSN() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOSTNAME"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_DATABASE"))
-}
-
 func CreateUserSession() (string, error) {
 	tokenBytes, err := strconv.Atoi(os.Getenv("USER_SESSION_TOKEN_BYTES"))
 	if err != nil {
@@ -27,7 +18,7 @@ func CreateUserSession() (string, error) {
 
 	b := make([]byte, tokenBytes)
 	if _, err := rand.Read(b); err != nil {
-		return "", fmt.Errorf("Failed to generate session id: %w", err)
+		return "", fmt.Errorf("failed to generate session id: %w", err)
 	}
 
 	s := base64.RawURLEncoding.EncodeToString(b)
