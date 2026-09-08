@@ -18,7 +18,7 @@ func NewPostgresConnection(ctx context.Context, connString string) (*pgxpool.Poo
 	config.MinConns = 5
 	config.MaxConnIdleTime = 5 * time.Minute
 	config.MaxConnLifetimeJitter = 3 * time.Minute
-	config.MaxConnLifetime = 10 * time.Minute
+	config.MaxConnLifetime = 30 * time.Minute
 	config.HealthCheckPeriod = 1 * time.Minute
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
