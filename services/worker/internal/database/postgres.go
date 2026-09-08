@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,6 +24,9 @@ func NewPostgresConnection(ctx context.Context, connString string) (*pgxpool.Poo
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, err
+	}
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping the server")
 	}
 	return pool, nil
 }
