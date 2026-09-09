@@ -9,7 +9,7 @@ var (
 	// Users
 	ErrUserNotFound      = &NotFoundError{"user not found"}
 	ErrInvalidUser       = &BadRequestError{"invalid user"}
-	ErrDuplicateUsername = &ConflictError{"user already taken"}
+	ErrDuplicateUsername = &ConflictError{"username already taken"}
 	ErrDuplicateEmail    = &ConflictError{"email already registered"}
 	ErrDuplicateUser     = &ConflictError{"user with that login already exists"}
 	ErrIncorrectPassword = &UnauthorizedError{"incorrect password"}
@@ -34,11 +34,11 @@ var (
 	ErrDuplicateIngestJob   = &ConflictError{"identical content already ingested in this session"}
 
 	// Upload ingestion
-	ErrInvalidUpload   = &BadRequestError{"invalid upload: session_id and at least one file are required"}
-	ErrTooManyFiles    = &BadRequestError{"too many files in upload"}
-	ErrFileTooLarge    = &PayloadTooLargeError{"file exceeds per-file size limit"}
-	ErrRequestTooLarge = &PayloadTooLargeError{"upload exceeds total request size limit"}
-	ErrUnsupportedFile = &BadRequestError{"unsupported file type"}
-	ErrUploadQueueFull = &ServiceUnavailableError{"ingestion queue full, try again later"}
+	ErrInvalidUpload    = &BadRequestError{"invalid upload: session_id and at least one file are required"}
+	ErrTooManyFiles     = &BadRequestError{"too many files in upload"}
+	ErrFileTooLarge     = &PayloadTooLargeError{"file exceeds per-file size limit"}
+	ErrRequestTooLarge  = &PayloadTooLargeError{"upload exceeds total request size limit"}
+	ErrUnsupportedFile  = &BadRequestError{"unsupported file type"}
+	ErrUploadQueueFull  = &ServiceUnavailableError{"ingestion queue full, try again later"}
 	ErrURLFetchDisabled = &BadRequestError{"url fetch disabled"}
 )

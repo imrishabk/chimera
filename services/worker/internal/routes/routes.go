@@ -19,7 +19,6 @@ func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 	if svc != nil && svc.Auth != nil {
 		authMiddleware = middleware.AuthMiddlewareValidated(svc.Auth)
 	}
-
 	// Auth Routes (public)
 	r.Route("/auth", func(r chi.Router) {
 		r.Method(http.MethodPost, "/register", handler.AppHandler(handlers.Auth.Register))

@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file="../../.env", env_file_encoding="utf-8", extra="ignore"
     )
 
     model_provider: str = "https://openrouter.ai/api/v1"
@@ -14,9 +14,9 @@ class Settings(BaseSettings):
     embed_model: str = "nvidia/nemotron-3-embed-1b:free"
 
     db_hostname: str = "127.0.0.1"
-    db_username: str = "chimera"
-    db_password: str = "chimera"
-    db_database: str = "chimera"
+    db_username: str = "username"
+    db_password: str = "password"
+    db_database: str = "database"
     db_port: str = "5432"
 
     chunk_size: int = 1000

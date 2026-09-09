@@ -26,37 +26,13 @@ import (
 )
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatal("FAILED to load .env file", "error", err)
 	}
 }
 
 func main() {
-	// Server initialization & serve
-	srv := initializeServer()
-	log.Info("Starting server", "port", 8000, "db_connected", true)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("failed to start server", "error", err)
-		}
-	}()
-
-	// Graceful shutdown of the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	sig := <-quit
-	log.Info("Signal received to shutdown server", "signal", sig)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("forced shutdown", "error", err)
-	}
-	log.Info("Server shutdown gracefully", "error", nil)
-}
-
-func initializeServer() *http.Server {
 	// Create a database pool
 	pool, err := createDatabasePool()
 	if err != nil {
@@ -64,9 +40,6 @@ func initializeServer() *http.Server {
 	}
 	defer pool.Close()
 	log.Info("Successfully created database pool")
-
-	// Create a global repo using that pool
-	repositories := repo.New(pool)
 
 	// Setup GRPC client
 	grpcClient, err := createGRPCClient()
@@ -80,6 +53,35 @@ func initializeServer() *http.Server {
 		}
 	}()
 	log.Info("Successfully created GRPC client")
+
+	// Server initialization & serve
+	srv := initializeServer(pool, grpcClient)
+	log.Info("Starting server", "port", 8000, "db_connected", true)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("failed to start server", "error", err)
+		}
+	}()
+
+	// Graceful shutdown of the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-quit
+
+	log.Info("Signal received to shutdown server", "signal", sig)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("forced shutdown", "error", err)
+	}
+	log.Info("Server shutdown gracefully", "error", nil)
+}
+
+func initializeServer(pool *pgxpool.Pool, grpcClient *grpcclient.Client) *http.Server {
+	// Create a repo using pgx pool
+	repositories := repo.New(pool)
 
 	// Create services using repositories
 	services := service.NewServices(repositories)
@@ -109,7 +111,7 @@ func initializeServer() *http.Server {
 	r.Mount("/api", routes.Configure(services, handlers))
 
 	log.Info("Registering Routes")
-	err = chi.Walk(r, func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+	err := chi.Walk(r, func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		log.Info("\t",
 			"method", method,
 			"route", route,
