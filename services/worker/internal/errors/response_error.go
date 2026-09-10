@@ -1,12 +1,12 @@
 package errors
 
 var (
-	// Default Errors
+	// Default
 	ErrInvalidBody  = &BadRequestError{"invalid body"}
 	ErrInvalidParam = &BadRequestError{"invalid parameter"}
 	ErrInvalidQuery = &BadRequestError{"invalid query"}
 
-	// Users
+	// User
 	ErrUserNotFound      = &NotFoundError{"user not found"}
 	ErrInvalidUser       = &BadRequestError{"invalid user"}
 	ErrDuplicateUsername = &ConflictError{"username already taken"}
@@ -15,7 +15,7 @@ var (
 	ErrIncorrectPassword = &UnauthorizedError{"incorrect password"}
 	ErrSamePassword      = &BadRequestError{"old and new password cannot be same"}
 
-	// Sessions
+	// Session
 	ErrInvalidSession  = &BadRequestError{"invalid session"}
 	ErrSessionNotFound = &NotFoundError{"session not found"}
 

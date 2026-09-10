@@ -33,7 +33,6 @@ func init() {
 }
 
 func main() {
-	// Create a database pool
 	pool, err := createDatabasePool()
 	if err != nil {
 		log.Fatal("Failed to connect to database", "error", err)
@@ -41,7 +40,6 @@ func main() {
 	defer pool.Close()
 	log.Info("Successfully created database pool")
 
-	// Setup GRPC client
 	grpcClient, err := createGRPCClient()
 	if err != nil {
 		grpcClient = nil
@@ -54,7 +52,6 @@ func main() {
 	}()
 	log.Info("Successfully created GRPC client")
 
-	// Server initialization & serve
 	srv := initializeServer(pool, grpcClient)
 	log.Info("Starting server", "port", 8000, "db_connected", true)
 	go func() {
@@ -63,7 +60,6 @@ func main() {
 		}
 	}()
 
-	// Graceful shutdown of the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
@@ -80,10 +76,8 @@ func main() {
 }
 
 func initializeServer(pool *pgxpool.Pool, grpcClient *grpcclient.Client) *http.Server {
-	// Create a repo using pgx pool
 	repositories := repo.New(pool)
 
-	// Create services using repositories
 	services := service.NewServices(repositories)
 	if grpcClient != nil {
 		rag := service.NewRAGService(grpcClient)
@@ -91,10 +85,8 @@ func initializeServer(pool *pgxpool.Pool, grpcClient *grpcclient.Client) *http.S
 		services.IngestJob = service.NewIngestJobService(repositories.IngestJob, rag)
 	}
 
-	// Create handlers using the services
 	handlers := handler.NewHandlers(services)
 
-	// Setup Router
 	r := chi.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -125,18 +117,11 @@ func initializeServer(pool *pgxpool.Pool, grpcClient *grpcclient.Client) *http.S
 		log.Info("Successfully registered all routes")
 	}
 
-	// Listen and serve the routes
-	// CORS wraps the whole router (not chi Use) so preflight OPTIONS is
-	// answered before chi's 405 handling.
 	srv := &http.Server{
 		Addr:    ":8000",
 		Handler: middleware.CORS(r),
 	}
 	return srv
-	// log.Info("Starting server", "port", 8000, "db_connected", true)
-	// if err := http.ListenAndServe(":8000", middleware.CORS(r)); err != nil {
-	// 	log.Fatal("failed to start the server!", "error", err)
-	// }
 }
 
 func createDatabasePool() (*pgxpool.Pool, error) {

@@ -10,14 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Create a new Postgres Connection Pool
 func NewPostgresConnectionPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch configuration for pool config from env with default value if env does not exist
 	var (
 		poolMaxConnection         = getEnvOrDefaultInt32("POOL_MAX_CONNECTION", 25)
 		poolMinConnection         = getEnvOrDefaultInt32("POOL_MIN_CONNECTION", 5)
@@ -31,7 +29,6 @@ func NewPostgresConnectionPool(ctx context.Context, connString string) (*pgxpool
 			getEnvOrDefaultInt32("POOL_HEALTH_CHECK_PERIOD", 1)) * time.Minute
 	)
 
-	// Set pool config
 	config.MaxConns = poolMaxConnection
 	config.MinConns = poolMinConnection
 	config.MaxConnIdleTime = poolMaxConnectionIdleTime
@@ -39,12 +36,10 @@ func NewPostgresConnectionPool(ctx context.Context, connString string) (*pgxpool
 	config.MaxConnLifetime = poolMaxConnectionLifetime
 	config.HealthCheckPeriod = poolHealthCheckPeriod
 
-	// Create a new pgx pool from the pool configuration
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, err
 	}
-	// Check if database is available for pinging
 	if err := pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("failed to ping the server")
 	}

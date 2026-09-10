@@ -95,41 +95,6 @@ func (e *PayloadTooLargeError) Error() string      { return "payload too large" 
 func (e *PayloadTooLargeError) StatusCode() int    { return http.StatusRequestEntityTooLarge }
 func (e *PayloadTooLargeError) Messages() []string { return []string{e.msg} }
 
-// StatusAndBody is the single central place that decides how any error
-// gets turned into an HTTP status + client-facing message + optional field errors.
-//
-//	func StatusAndErrorMsg(err error) (statusCode int, messages []string) {
-//		var (
-//			valErrs     validator.ValidationErrors
-//			notFoundErr *NotFoundError
-//			handlerErr  *HandlerError
-//		)
-//
-//		switch {
-//		case errors.Is(err, ErrUserNotFound), errors.Is(err, ErrTokenNotFound):
-//			return http.StatusNotFound, []string{err.Error()}
-//		case errors.Is(err, ErrDuplicateEmail),
-//			errors.Is(err, ErrDuplicateUsername),
-//			errors.Is(err, ErrDuplicateUser):
-//			return http.StatusConflict, []string{err.Error()}
-//		case errors.Is(err, ErrInvalidToken), errors.Is(err, ErrExpiredToken):
-//			return http.StatusUnauthorized, []string{err.Error()}
-//		case errors.As(err, &handlerErr):
-//			return handlerErr.Status, []string{handlerErr.Message}
-//		case errors.As(err, &valErrs):
-//			messages = make([]string, len(valErrs))
-//			for i, fe := range valErrs {
-//				messages[i] = fmt.Sprintf("%s: %s", fe.Field(), fieldMessage(fe))
-//			}
-//			return http.StatusBadRequest, messages
-//		case errors.As(err, &notFoundErr):
-//			return http.StatusNotFound, []string{notFoundErr.Error()}
-//		default:
-//			return http.StatusInternalServerError, []string{"internal server error"}
-//		}
-//	}
-//
-// Following Open-Close Principle for Error Handlers
 func StatusAndErrorMsg(err error) (int, []string) {
 	var httpErr HTTPError
 	if errors.As(err, &httpErr) {
