@@ -13,6 +13,8 @@ import (
 func Configure(svc *service.Services, handlers *handler.Handlers) chi.Router {
 	r := chi.NewRouter()
 
+	r.Use(middleware.JSONContentType("/stream"))
+
 	authMiddleware := middleware.AuthMiddlewareValidated(svc.Auth)
 
 	r.Route("/auth", func(r chi.Router) {

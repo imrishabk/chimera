@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -88,16 +87,6 @@ func initializeServer(pool *pgxpool.Pool, grpcClient *grpcclient.Client) *http.S
 	handlers := handler.NewHandlers(services)
 
 	r := chi.NewRouter()
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.Contains(r.URL.Path, "/stream") {
-				next.ServeHTTP(w, r)
-				return
-			}
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			next.ServeHTTP(w, r)
-		})
-	})
 
 	r.HandleFunc("/", defaultRoute)
 	r.Mount("/api", routes.Configure(services, handlers))
